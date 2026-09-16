@@ -11,6 +11,7 @@ import {
   Cpu,
   Shield,
   Zap,
+  ExternalLink,
 } from "lucide-react";
 import { CaseStudy, Language, ThemeMode } from "../types";
 import { getCaseStudies } from "../data/portfolioData";
@@ -34,17 +35,17 @@ export const Portfolio: React.FC<PortfolioProps> = ({
 
   const categories = [
     { id: "all", label: t.portfolio.filterAll },
-    { id: "automation", label: t.portfolio.filterAutomation },
+    { id: "ai-automation", label: t.portfolio.filterAutomation },
+    { id: "seo", label: t.portfolio.filterSeo },
     { id: "web", label: t.portfolio.filterWeb },
-    { id: "ai", label: t.portfolio.filterAi },
     { id: "mobile", label: t.portfolio.filterMobile },
   ];
 
   const filteredStudies = caseStudies.filter((item) => {
     if (selectedCategory === "all") return true;
-    if (selectedCategory === "automation") return item.category.includes("Auto");
+    if (selectedCategory === "ai-automation") return item.category.includes("Auto") || item.category.includes("IA") || item.category.includes("AI");
+    if (selectedCategory === "seo") return item.category.includes("SEO") || item.category.includes("Marketing");
     if (selectedCategory === "web") return item.category.includes("Web");
-    if (selectedCategory === "ai") return item.category.includes("IA") || item.category.includes("AI");
     if (selectedCategory === "mobile") return item.category.includes("Mobil");
     return true;
   });
@@ -114,7 +115,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
                 </span>
               </div>
 
-              {/* Title & Client */}
+              {/* Title & Client / Cible */}
               <div>
                 <h2 className={`text-xl font-bold transition-colors ${
                   theme === "dark" ? "text-white group-hover:text-blue-300" : "text-slate-900 group-hover:text-blue-600"
@@ -192,7 +193,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
             </div>
 
             {/* Action Button */}
-            <div className="pt-6 mt-6 border-t border-white/10">
+            <div className="pt-6 mt-6 border-t border-white/10 flex gap-2">
               <button
                 id={`view-study-${study.id}`}
                 onClick={() => setActiveModalStudy(study)}
@@ -224,11 +225,20 @@ export const Portfolio: React.FC<PortfolioProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-          {["React 18 & Next.js", "TypeScript Strict", "Gemini & LLM APIs", "Tailwind CSS & Motion", "PostgreSQL & Cloud SQL", "Make / Zapier / N8N", "REST & GraphQL APIs", "Docker & Cloud Run"].map((tech, i) => (
-            <div key={i} className="p-2.5 rounded-xl glass-card flex items-center gap-2 text-xs font-mono font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span className="truncate">{tech}</span>
-            </div>
+  {[
+    "Frontend & UI/UX Moderne",
+    "Architecture TypeScript & Web",
+    "Ingénierie d'Agents IA & LLM",
+    "Automatisation & Workflows",
+    "Bases de Données & Cloud",
+    "Conception & Intégration d'APIs",
+    "Déploiement & DevOps",
+    "SEO & Stratégie Content Marketing"
+  ].map((skill, i) => (
+    <div key={i} className="p-2.5 rounded-xl glass-card flex items-center gap-2 text-xs font-mono font-medium">
+      <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+      <span className="truncate">{skill}</span>
+    </div>
           ))}
         </div>
       </div>
@@ -329,6 +339,18 @@ export const Portfolio: React.FC<PortfolioProps> = ({
 
             {/* Modal Bottom Actions */}
             <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
+              {activeModalStudy.liveUrl && (
+                <a
+                  href={activeModalStudy.liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 border border-white/20"
+                >
+                  <span>Visiter le site en direct</span>
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+
               <button
                 id="modal-cta-contact"
                 onClick={() => {
@@ -340,6 +362,7 @@ export const Portfolio: React.FC<PortfolioProps> = ({
                 <span>{t.portfolio.discussSimilar}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+
               <button
                 onClick={() => setActiveModalStudy(null)}
                 className="py-3 px-5 rounded-xl glass-card text-xs sm:text-sm font-medium transition-colors"

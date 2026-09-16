@@ -30,6 +30,7 @@ import {
   getSiteSettings,
   getProfilePhoto,
 } from "../data/contentStore";
+import photoCapinWebp from "../assets/images/photo-capin.webp";
 
 interface HomeProps {
   language: Language;
@@ -46,6 +47,9 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
   const [profilePhoto, setProfilePhoto] = useState<string>(() => getProfilePhoto());
 
   const featuredStudy = caseStudies[0];
+
+  // Image source effective (soit issue du store local, soit du fichier par défaut importé)
+  const effectiveProfilePhoto = profilePhoto || photoCapinWebp;
 
   // Re-sync with store if changed
   useEffect(() => {
@@ -95,15 +99,11 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                   title="Voir le profil de Capin Akpado"
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-500/40 relative shrink-0 bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
-                    {profilePhoto ? (
-                      <img
-                        src={profilePhoto}
-                        alt="Capin Judicael Akpado"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span>CA</span>
-                    )}
+                    <img
+                      src={effectiveProfilePhoto}
+                      alt="Capin Judicael Akpado"
+                      className="w-full h-full object-cover"
+                    />
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#09090B]" />
                   </div>
                   <div className="text-left">
@@ -111,7 +111,7 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                       Capin Akpado
                     </span>
                     <span className={`text-[10px] ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
-                      {language === "fr" ? "Architecte Web & IA" : "AI & Web Architect"}
+                      {language === "fr" ? "Développeur web, mobile & IA" : "Web, mobile & AI developer"}
                     </span>
                   </div>
                 </button>
@@ -329,25 +329,11 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
             {/* Left: Photo Frame */}
             <div className="lg:col-span-4 flex flex-col items-center text-center space-y-4">
               <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden glass-card border-2 border-blue-500/30 p-1.5 shadow-2xl group">
-                {profilePhoto ? (
-                  <img
-                    src={profilePhoto}
-                    alt="Capin Judicael Akpado"
-                    className="w-full h-full object-cover rounded-2xl transition-transform group-hover:scale-105 duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-2xl bg-gradient-to-br from-blue-600/30 via-indigo-600/20 to-black flex flex-col items-center justify-center text-center p-4 border border-white/10">
-                    <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-extrabold shadow-lg shadow-blue-600/40 mb-2">
-                      CA
-                    </div>
-                    <span className="text-xs font-bold font-mono text-white">
-                      Capin J. Akpado
-                    </span>
-                    <span className="text-[10px] text-blue-400 font-mono">
-                      Architecte IA & Web
-                    </span>
-                  </div>
-                )}
+                <img
+                  src={effectiveProfilePhoto}
+                  alt="Capin Judicael Akpado"
+                  className="w-full h-full object-cover rounded-2xl transition-transform group-hover:scale-105 duration-300"
+                />
 
                 {/* Active Indicator */}
                 <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-emerald-500/90 text-white text-[10px] font-mono font-bold flex items-center gap-1 shadow-md backdrop-blur-sm">
@@ -361,7 +347,7 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
             <div className="lg:col-span-8 space-y-5 text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-blue-500 text-xs font-semibold uppercase tracking-wider font-mono">
                 <User className="w-3.5 h-3.5" />
-                <span>{language === "fr" ? "Architecte & Fondateur" : "Architect & Founder"}</span>
+                <span>{language === "fr" ? "Développeur web, mobile & IA" : "Web, mobile & AI developer"}</span>
               </div>
 
               <div className="space-y-2">
@@ -370,30 +356,30 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                 </h2>
                 <p className="text-sm sm:text-base font-semibold text-blue-500">
                   {language === "fr"
-                    ? "Architecte Solutions Web & Intelligence Artificielle"
-                    : "AI Solutions & Web Architect"}
+                    ? "Création de sites web, applications et solutions d'intelligence artificielle sur mesure"
+                    : "Custom websites, applications, and AI solutions"}
                 </p>
               </div>
 
               <p className={`text-sm sm:text-base leading-relaxed ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
                 {language === "fr"
-                  ? "Spécialiste de la conception d'applications web d'élite et du déploiement d'agents IA autonomes. J'aide les dirigeants, startups et équipes ambitieuses à automatiser leurs processus métiers critiques et à accélérer leur croissance grâce à des solutions robustes, esthétiques et pérennes."
-                  : "Specialist in engineering elite web applications and deploying autonomous AI agents. I empower founders, SMBs, and modern teams to automate high-friction workflows and scale their digital capabilities through robust, elegant software."}
+                  ? "Spécialiste de la création de sites web performants, d'applications mobiles sur mesure et de solutions IA, j'aide les entreprises et startups à transformer leurs idées en produits digitaux d'élite. De l'interface utilisateur au déploiement d'agents IA autonomes, je bâtis des outils robustes qui éliminent les tâches répétitives et maximisent votre rentabilité."
+                  : "Specializing in high-performance website development, custom mobile applications, and AI solutions, I help startups and established businesses turn their ideas into elite digital products. From UI/UX design to deploying autonomous AI agents, I build robust tools that eliminate repetitive tasks and maximize your profitability."}
               </p>
 
               {/* Badges */}
               <div className="flex flex-wrap gap-2 pt-1">
                 <span className="px-3 py-1 rounded-lg text-xs font-mono font-medium glass-card text-blue-400 border border-blue-500/20">
-                  ⚡ React 19 & TypeScript
+                  ⚡ Website & App
                 </span>
                 <span className="px-3 py-1 rounded-lg text-xs font-mono font-medium glass-card text-indigo-400 border border-indigo-500/20">
-                  🤖 Agents Gemini 2.0 & LLM
+                  🤖 AI Agents & LLM
                 </span>
                 <span className="px-3 py-1 rounded-lg text-xs font-mono font-medium glass-card text-emerald-400 border border-emerald-500/20">
                   ⚙️ Workflows & Automatisation
                 </span>
                 <span className="px-3 py-1 rounded-lg text-xs font-mono font-medium glass-card text-amber-400 border border-amber-500/20">
-                  ✨ Design Frosted Glass
+                  ✨ Tech Engine
                 </span>
               </div>
 
@@ -408,11 +394,11 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                 </button>
 
                 <a
-                  href="mailto:judicaelakpado@gmail.com"
+                  href="mailto:contact@capinakpado.com"
                   className="inline-flex items-center gap-2 text-xs sm:text-sm font-mono text-zinc-400 hover:text-blue-400 transition-colors"
                 >
                   <Mail className="w-4 h-4 text-blue-500" />
-                  <span>judicaelakpado@gmail.com</span>
+                  <span>contact@capinakpado.com</span>
                 </a>
               </div>
             </div>

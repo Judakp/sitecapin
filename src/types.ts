@@ -14,7 +14,22 @@ export interface CaseStudy {
   id: string;
   title: string;
   client: string;
-  category: "Web & Plateforme" | "Intégration IA" | "Automatisation & Workflows" | "Application Mobile" | "Web & Platform" | "AI Integration" | "Automation & Workflows" | "Mobile Application";
+  category: 
+    | "Web & Plateforme" 
+    | "Intégration IA" 
+    | "Agents IA"
+    | "Automatisation & Workflows" 
+    | "Automatisation"
+    | "SEO & Marketing Digital"
+    | "Application Mobile" 
+    | "Web & Platform" 
+    | "AI Integration" 
+    | "AI Agents"
+    | "Automation & Workflows" 
+    | "Automation"
+    | "SEO & Digital Marketing"
+    | "Mobile Application"
+    | string;
   badge: string;
   shortDescription: string;
   problem: string;
@@ -31,6 +46,7 @@ export interface CaseStudy {
     role: string;
     company: string;
   };
+  liveUrl?: string; // <-- Lien facultatif vers le site en direct
 }
 
 export interface ServiceItem {
