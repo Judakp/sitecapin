@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Sparkles,
   Bot,
@@ -25,6 +25,7 @@ import {
   Calendar,
   Eye,
   Code2,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
@@ -75,6 +76,16 @@ interface AnalysisData {
   rawBlueprint: string;
 }
 
+// Fonction globale d'assainissement anti-XSS
+const sanitizeInput = (str: string): string => {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 export const Playground: React.FC<PlaygroundProps> = ({
   language,
   theme,
@@ -89,6 +100,59 @@ export const Playground: React.FC<PlaygroundProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisData | null>(null);
+
+  // Gestion du Quota quotidien (2 par jour)
+  const MAX_DAILY_SIMULATIONS = 2;
+  const [remainingSimulations, setRemainingSimulations] = useState<number>(MAX_DAILY_SIMULATIONS);
+  const [quotaReached, setQuotaReached] = useState<boolean>(false);
+
+  useEffect(() => {
+    checkDailyQuota();
+  }, []);
+
+  const checkDailyQuota = () => {
+    const today = new Date().toISOString().split("T")[0]; // Ex: "2026-09-17"
+    const storedData = localStorage.getItem("capin_ai_playground_quota");
+
+    if (storedData) {
+      try {
+        const { date, count } = JSON.parse(storedData);
+        if (date === today) {
+          const remaining = Math.max(0, MAX_DAILY_SIMULATIONS - count);
+          setRemainingSimulations(remaining);
+          setQuotaReached(count >= MAX_DAILY_SIMULATIONS);
+          return;
+        }
+      } catch {
+        // En cas de corruption des données, réinitialisation
+      }
+    }
+
+    // Nouveau jour ou première visite
+    localStorage.setItem("capin_ai_playground_quota", JSON.stringify({ date: today, count: 0 }));
+    setRemainingSimulations(MAX_DAILY_SIMULATIONS);
+    setQuotaReached(false);
+  };
+
+  const incrementDailyQuota = () => {
+    const today = new Date().toISOString().split("T")[0];
+    const storedData = localStorage.getItem("capin_ai_playground_quota");
+    let count = 0;
+
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData);
+        if (parsed.date === today) {
+          count = parsed.count;
+        }
+      } catch {}
+    }
+
+    const newCount = count + 1;
+    localStorage.setItem("capin_ai_playground_quota", JSON.stringify({ date: today, count: newCount }));
+    setRemainingSimulations(Math.max(0, MAX_DAILY_SIMULATIONS - newCount));
+    setQuotaReached(newCount >= MAX_DAILY_SIMULATIONS);
+  };
 
   // Form States for Automation
   const [autoIndustry, setAutoIndustry] = useState("Services & Conseil B2B");
@@ -251,22 +315,43 @@ export const Playground: React.FC<PlaygroundProps> = ({
   };
 
   const generateSimulation = async () => {
+    if (quotaReached) return;
+
     setIsLoading(true);
     setAnalysisResult(null);
 
     try {
+      // Nettoyage sécurisé des données soumises
+      const sanitizedParameters =
+        activeTab === "automation"
+          ? {
+              autoIndustry: sanitizeInput(autoIndustry),
+              autoDescription: sanitizeInput(autoDescription),
+              autoTeamSize: sanitizeInput(autoTeamSize),
+              autoBottleneck: sanitizeInput(autoBottleneck),
+              autoVolume: sanitizeInput(autoVolume),
+            }
+          : activeTab === "web_architect"
+          ? {
+              webActivity: sanitizeInput(webActivity),
+              webDescription: sanitizeInput(webDescription),
+              webGoal: sanitizeInput(webGoal),
+              webStyle: sanitizeInput(webStyle),
+              webConversion: sanitizeInput(webConversion),
+            }
+          : {
+              appType: sanitizeInput(appType),
+              appDescription: sanitizeInput(appDescription),
+              appFeature: sanitizeInput(appFeature),
+              appPlatform: sanitizeInput(appPlatform),
+            };
+
       const promptData = {
         tab: activeTab,
         language,
-        parameters:
-          activeTab === "automation"
-            ? { autoIndustry, autoDescription, autoTeamSize, autoBottleneck, autoVolume }
-            : activeTab === "web_architect"
-            ? { webActivity, webDescription, webGoal, webStyle, webConversion }
-            : { appType, appDescription, appFeature, appPlatform },
+        parameters: sanitizedParameters,
       };
 
-      // Appel de votre Edge Function Supabase 'analyze-playground'
       const { data: responseData, error } = await supabase.functions.invoke("analyze-playground", {
         body: promptData,
       });
@@ -284,6 +369,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
       }));
 
       setAnalysisResult(data);
+      incrementDailyQuota();
       triggerConfetti();
     } catch (error) {
       console.error("Échec de la génération :", error);
@@ -311,6 +397,22 @@ export const Playground: React.FC<PlaygroundProps> = ({
         <p className={`text-sm sm:text-base leading-relaxed ${isDark ? "text-zinc-300" : "text-slate-600"}`}>
           {t.testAi.desc}
         </p>
+
+        {/* Quota Indicator */}
+        <div className="pt-2 flex items-center justify-center gap-2">
+          <div className={`px-3 py-1 rounded-full text-xs font-mono font-medium border flex items-center gap-1.5 ${
+            quotaReached
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
+              : "bg-blue-500/10 border-blue-500/20 text-blue-400"
+          }`}>
+            <Clock className="w-3.5 h-3.5" />
+            <span>
+              {language === "fr"
+                ? `Simulations restantes aujourd'hui : ${remainingSimulations}/${MAX_DAILY_SIMULATIONS}`
+                : `Simulations remaining today: ${remainingSimulations}/${MAX_DAILY_SIMULATIONS}`}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* 2. Simulator Navigation Tabs */}
@@ -495,6 +597,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={100}
                     value={autoIndustry}
                     onChange={(e) => setAutoIndustry(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -511,6 +614,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <textarea
                     rows={2}
+                    maxLength={1000}
                     value={autoDescription}
                     onChange={(e) => setAutoDescription(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -546,6 +650,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <textarea
                     rows={2}
+                    maxLength={1000}
                     value={autoBottleneck}
                     onChange={(e) => setAutoBottleneck(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -562,6 +667,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={100}
                     value={autoVolume}
                     onChange={(e) => setAutoVolume(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -583,6 +689,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={100}
                     value={webActivity}
                     onChange={(e) => setWebActivity(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -599,6 +706,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <textarea
                     rows={2}
+                    maxLength={1000}
                     value={webDescription}
                     onChange={(e) => setWebDescription(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -609,13 +717,13 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   />
                 </div>
 
-                {/* Champ texte libre pour l'objectif principal */}
                 <div className="space-y-1">
                   <label className={`block font-semibold ${isDark ? "text-zinc-300" : "text-slate-700"}`}>
                     {language === "fr" ? "Objectif principal du site" : "Main Goal"}
                   </label>
                   <input
                     type="text"
+                    maxLength={150}
                     value={webGoal}
                     onChange={(e) => setWebGoal(e.target.value)}
                     placeholder={
@@ -637,6 +745,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={100}
                     value={webStyle}
                     onChange={(e) => setWebStyle(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -647,13 +756,13 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   />
                 </div>
 
-                {/* Champ texte libre pour l'action attendue des visiteurs */}
                 <div className="space-y-1">
                   <label className={`block font-semibold ${isDark ? "text-zinc-300" : "text-slate-700"}`}>
                     {language === "fr" ? "Action attendue des visiteurs" : "Desired Visitor Action"}
                   </label>
                   <input
                     type="text"
+                    maxLength={150}
                     value={webConversion}
                     onChange={(e) => setWebConversion(e.target.value)}
                     placeholder={
@@ -680,6 +789,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={100}
                     value={appType}
                     onChange={(e) => setAppType(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -696,6 +806,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <textarea
                     rows={2}
+                    maxLength={1000}
                     value={appDescription}
                     onChange={(e) => setAppDescription(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -712,6 +823,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <textarea
                     rows={2}
+                    maxLength={1000}
                     value={appFeature}
                     onChange={(e) => setAppFeature(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -728,6 +840,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                   </label>
                   <input
                     type="text"
+                    maxLength={100}
                     value={appPlatform}
                     onChange={(e) => setAppPlatform(e.target.value)}
                     className={`w-full px-3 py-2 rounded-xl text-xs border ${
@@ -746,13 +859,24 @@ export const Playground: React.FC<PlaygroundProps> = ({
             <button
               id="generate-simulation-btn"
               onClick={generateSimulation}
-              disabled={isLoading}
-              className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.99] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all cursor-pointer border border-white/20"
+              disabled={isLoading || quotaReached}
+              className={`w-full py-3.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all border border-white/20 cursor-pointer ${
+                quotaReached
+                  ? "bg-zinc-700 text-zinc-400 cursor-not-allowed opacity-70"
+                  : "bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white shadow-blue-600/30"
+              }`}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>{t.testAi.generatingBtn}</span>
+                </>
+              ) : quotaReached ? (
+                <>
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <span>
+                    {language === "fr" ? "Limite quotidienne atteinte (2/2)" : "Daily limit reached (2/2)"}
+                  </span>
                 </>
               ) : (
                 <>
@@ -1000,8 +1124,11 @@ export const Playground: React.FC<PlaygroundProps> = ({
 
                 <button
                   onClick={generateSimulation}
+                  disabled={quotaReached}
                   className={`w-full sm:w-auto px-4 py-3.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                    isDark
+                    quotaReached
+                      ? "bg-zinc-800 border-zinc-700 text-zinc-500 cursor-not-allowed"
+                      : isDark
                       ? "bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-zinc-300"
                       : "bg-slate-100 border-slate-300 hover:bg-slate-200 text-slate-700"
                   }`}
@@ -1030,9 +1157,14 @@ export const Playground: React.FC<PlaygroundProps> = ({
 
               <button
                 onClick={generateSimulation}
-                className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/25 cursor-pointer transition-all border border-white/20 active:scale-[0.99]"
+                disabled={quotaReached}
+                className={`px-6 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg cursor-pointer transition-all border border-white/20 ${
+                  quotaReached
+                    ? "bg-zinc-700 text-zinc-400 cursor-not-allowed opacity-70"
+                    : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25 active:scale-[0.99]"
+                }`}
               >
-                <span>{t.testAi.generateBtn}</span>
+                <span>{quotaReached ? (language === "fr" ? "Limite atteinte (2/2)" : "Limit reached (2/2)") : t.testAi.generateBtn}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

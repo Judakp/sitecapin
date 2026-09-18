@@ -57,24 +57,60 @@ export const About: React.FC<AboutProps> = ({
 
   const techCategories = [
     {
-      name: language === "fr" ? "Frontend & Design UX" : "Frontend & UX Design",
+      name: language === "fr" ? "Frontend & Mobile" : "Frontend & Mobile",
       icon: <Code2 className="w-4 h-4 text-blue-500" />,
-      skills: ["React 19", "TypeScript", "Next.js", "Tailwind CSS", "Vite", "Motion"],
+      skills: [
+        "React / Next.js",
+        "Flutter / Dart",
+        "TypeScript",
+        "Tailwind CSS / Motion",
+        "Vue.js",
+        "HTML5 / CSS3",
+        "Vite",
+        "Figma UX/UI",
+      ],
     },
     {
       name: language === "fr" ? "Intelligence Artificielle & Agents" : "Artificial Intelligence & Agents",
       icon: <Cpu className="w-4 h-4 text-indigo-500" />,
-      skills: ["Gemini 2.0 / Flash", "LLM Prompting & Function Calling", "RAG & Vector Search", "Agents Autonomes", "LangChain"],
+      skills: [
+        "Gemini API",
+        "Claude API / OpenAI",
+        "ElevenLabs Voice AI",
+        "Agents Autonomes",
+        "RAG & Vector Search",
+        "LangChain",
+        "LLM Prompting & Function Calling",
+        "GEO & AI Search",
+      ],
     },
     {
       name: language === "fr" ? "Backend & Automatisation" : "Backend & Automation",
       icon: <Zap className="w-4 h-4 text-amber-500" />,
-      skills: ["Node.js / Express", "Python", "Make / Zapier API", "Webhooks & REST APIs", "WebSockets"],
+      skills: [
+        "Node.js / Express",
+        "Python",
+        "PHP",
+        "REST & GraphQL APIs",
+        "Make / Zapier / n8n",
+        "Webhooks & Sockets",
+        "Microservices",
+        "Automation Workflows",
+      ],
     },
     {
       name: language === "fr" ? "Bases de Données & Cloud" : "Databases & Cloud",
       icon: <Layers className="w-4 h-4 text-emerald-500" />,
-      skills: ["PostgreSQL", "Firestore / Firebase", "Docker", "Git / GitHub CI", "Cloud Run"],
+      skills: [
+        "PostgreSQL",
+        "Supabase & SQLite",
+        "Firestore / Firebase",
+        "Prisma ORM",
+        "Docker",
+        "Git / GitHub CI/CD",
+        "Cloud Run",
+        "Netlify / Vercel",
+      ],
     },
   ];
 
@@ -95,7 +131,9 @@ export const About: React.FC<AboutProps> = ({
         </h1>
 
         <p className="text-lg sm:text-xl font-medium text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400">
-          {(language === "fr" ? siteSettings.aboutRoleFr : siteSettings.aboutRoleEn) || t.about.role}
+          {(language === "fr" ? siteSettings.aboutRoleFr : siteSettings.aboutRoleEn) || (
+            language === "fr" ? "Développeur web, mobile & IA" : "Web, Mobile & AI Developer"
+          )}
         </p>
 
         <p className={`text-sm sm:text-base max-w-2xl mx-auto leading-relaxed ${
@@ -129,7 +167,7 @@ export const About: React.FC<AboutProps> = ({
                     {siteSettings.authorName || "Capin J. Akpado"}
                   </span>
                   <span className="text-[10px] text-blue-400 font-mono mt-0.5">
-                    {(language === "fr" ? siteSettings.authorRoleFr : siteSettings.authorRoleEn) || "Architecte IA & Dev"}
+                    {(language === "fr" ? siteSettings.authorRoleFr : siteSettings.authorRoleEn) || "Développeur web, mobile & IA"}
                   </span>
                 </div>
               )}
@@ -145,8 +183,8 @@ export const About: React.FC<AboutProps> = ({
             <div className="pt-4 border-t border-white/10 space-y-2.5 text-xs text-left">
               <div className="flex items-center gap-2 text-blue-500 font-mono">
                 <Mail className="w-4 h-4 shrink-0" />
-                <a href={`mailto:${siteSettings.email || "judicaelakpado@gmail.com"}`} className="hover:underline truncate">
-                  {siteSettings.email || "judicaelakpado@gmail.com"}
+                <a href={`mailto:${siteSettings.email || "contact@capinakpado.com"}`} className="hover:underline truncate">
+                  {siteSettings.email || "contact@capinakpado.com"}
                 </a>
               </div>
               <div className={`flex items-center gap-2 ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
@@ -155,7 +193,7 @@ export const About: React.FC<AboutProps> = ({
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <a
-                  href={`mailto:${siteSettings.email || "judicaelakpado@gmail.com"}`}
+                  href={`mailto:${siteSettings.email || "contact@capinakpado.com"}`}
                   className="p-2.5 rounded-xl glass-card hover:text-blue-500 transition-colors"
                   title="Email"
                 >
@@ -223,8 +261,8 @@ export const About: React.FC<AboutProps> = ({
 
             <h2 className={`text-2xl sm:text-3xl font-extrabold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
               {language === "fr"
-                ? "Bâtir des outils digitaux d'exception qui libèrent le potentiel humain."
-                : "Building high-performance digital tools that unlock human potential."}
+                ? "Concevoir et développer des sites web, applications mobiles, agents IA et solutions SaaS sur-mesure."
+                : "Building high-performance websites, mobile apps, AI agents, and custom SaaS platforms."}
             </h2>
 
             <div className={`space-y-4 text-sm sm:text-base leading-relaxed ${
@@ -234,11 +272,11 @@ export const About: React.FC<AboutProps> = ({
                 {(language === "fr" ? siteSettings.aboutBioFr : siteSettings.aboutBioEn) || (
                   language === "fr" ? (
                     <>
-                      Bonjour ! Je suis <strong className="text-blue-500 font-semibold">{siteSettings.authorName || "Capin Judicael Akpado"}</strong>. Architecte de solutions web et expert en intelligence artificielle, j'accompagne les dirigeants, entrepreneurs et équipes modernes pour concevoir des logiciels sur-mesure et déployer des agents autonomes.
+                      Bonjour ! Je suis <strong className="text-blue-500 font-semibold">{siteSettings.authorName || "Capin Judicael Akpado"}</strong>. Développeur web, mobile & IA, je conçois et développe des sites web, applications web, applications mobiles, agents IA autonomes, workflows d'automatisation et solutions SaaS sur-mesure pour accompagner les entreprises, startups et indépendants.
                     </>
                   ) : (
                     <>
-                      Hello! I am <strong className="text-blue-500 font-semibold">{siteSettings.authorName || "Capin Judicael Akpado"}</strong>. As a web solutions architect and artificial intelligence expert, I partner with executives, founders, and modern teams to engineer custom software and deploy autonomous agents.
+                      Hello! I am <strong className="text-blue-500 font-semibold">{siteSettings.authorName || "Capin Judicael Akpado"}</strong>. As a Web, Mobile & AI Developer, I design and build high-performance websites, web apps, mobile applications, autonomous AI agents, automated workflows, and custom SaaS solutions.
                     </>
                   )
                 )}
@@ -399,7 +437,7 @@ export const About: React.FC<AboutProps> = ({
           </button>
           
           <a
-            href="mailto:judicaelakpado@gmail.com"
+            href="mailto:contact@capinakpado.com"
             className="px-6 py-4 rounded-xl glass-card hover:bg-white/10 font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
           >
             <Mail className="w-4 h-4 text-blue-500" />

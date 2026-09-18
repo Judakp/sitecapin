@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Search,
   Clock,
   Calendar,
-  Tag,
-  ArrowRight,
-  ArrowLeft,
-  Share2,
-  CheckCircle2,
-  X,
   Sparkles,
-  User,
-  Image as ImageIcon,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { BlogPost, Language, ThemeMode } from "../types";
-import { getStoredBlogPosts, getProfilePhoto } from "../data/contentStore";
+import { getProfilePhoto } from "../data/contentStore";
 import { useTranslation } from "../data/translations";
+import { supabase } from "../lib/supabase";
 
 interface BlogProps {
   language: Language;
@@ -27,31 +23,63 @@ interface BlogProps {
 export const Blog: React.FC<BlogProps> = ({
   language,
   theme,
-  onContactClick,
 }) => {
   const t = useTranslation(language);
-  const [posts, setPosts] = useState<BlogPost[]>(() => getStoredBlogPosts(language));
+  const navigate = useNavigate();
+  
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [profilePhoto, setProfilePhoto] = useState<string>(() => getProfilePhoto());
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [activePost, setActivePost] = useState<BlogPost | null>(null);
-  const [copiedLink, setCopiedLink] = useState(false);
 
+  // Récupération des articles depuis Supabase filtrés par langue
   useEffect(() => {
-    setPosts(getStoredBlogPosts(language));
+    let isMounted = true;
+
+    async function fetchSupabasePosts() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("blog_posts")
+          .select("*")
+          .eq("language", language)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Erreur lors de la récupération Supabase:", error.message);
+        } else if (data && isMounted) {
+          // Normalisation des données si les colonnes Supabase diffèrent de l'interface BlogPost
+          const formattedPosts: BlogPost[] = data.map((item) => ({
+            id: item.id,
+            slug: item.slug,
+            title: item.title,
+            summary: item.summary,
+            content: item.content,
+            category: item.category,
+            readTime: item.read_time,
+            publishedDate: item.published_date,
+            coverImage: item.cover_image,
+            tags: item.tags || [],
+            keyTakeaways: item.key_takeaways || [],
+            author: item.author,
+          }));
+          setPosts(formattedPosts);
+        }
+      } catch (err) {
+        console.error("Erreur réseau Supabase:", err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchSupabasePosts();
     setProfilePhoto(getProfilePhoto());
-  }, [language]);
 
-  useEffect(() => {
-    const handleUpdate = () => {
-      setPosts(getStoredBlogPosts(language));
-      setProfilePhoto(getProfilePhoto());
-    };
-    window.addEventListener("storage", handleUpdate);
-    window.addEventListener("capin_content_updated", handleUpdate);
     return () => {
-      window.removeEventListener("storage", handleUpdate);
-      window.removeEventListener("capin_content_updated", handleUpdate);
+      isMounted = false;
     };
   }, [language]);
 
@@ -70,73 +98,10 @@ export const Blog: React.FC<BlogProps> = ({
     return matchesSearch && matchesCategory;
   });
 
-  const handleShare = (post: BlogPost) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href);
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-    }
-  };
-
-  // Helper to parse paragraph (supports Markdown image ![alt](url))
-  const renderParagraphContent = (paragraph: string, i: number) => {
-    // Check if it's an image markdown: ![alt](url)
-    const imageMatch = paragraph.match(/^!\[(.*?)\]\((.*?)\)$/);
-    if (imageMatch) {
-      const altText = imageMatch[1] || "Illustration de l'article";
-      const imageUrl = imageMatch[2];
-      return (
-        <figure key={i} className="my-6 rounded-2xl overflow-hidden border border-white/15 bg-black/40 shadow-xl">
-          <img
-            src={imageUrl}
-            alt={altText}
-            className="w-full max-h-[420px] object-cover hover:scale-[1.01] transition-transform duration-300"
-            loading="lazy"
-          />
-          {altText && (
-            <figcaption className={`p-2.5 text-center text-xs font-mono italic border-t ${
-              theme === "dark" ? "bg-white/[0.02] border-white/10 text-zinc-400" : "bg-slate-100 border-slate-200 text-slate-600"
-            }`}>
-              {altText}
-            </figcaption>
-          )}
-        </figure>
-      );
-    }
-
-    if (paragraph.startsWith("### ")) {
-      return (
-        <h3
-          key={i}
-          className={`text-lg sm:text-xl font-bold pt-4 pb-1 ${
-            theme === "dark" ? "text-white" : "text-slate-900"
-          }`}
-        >
-          {paragraph.replace("### ", "")}
-        </h3>
-      );
-    }
-    if (paragraph.startsWith("## ")) {
-      return (
-        <h2
-          key={i}
-          className={`text-xl sm:text-2xl font-bold pt-5 pb-1 ${
-            theme === "dark" ? "text-white" : "text-slate-900"
-          }`}
-        >
-          {paragraph.replace("## ", "")}
-        </h2>
-      );
-    }
-    if (paragraph.startsWith("- ")) {
-      return (
-        <div key={i} className="flex items-start gap-2 pl-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
-          <span>{paragraph.replace("- ", "")}</span>
-        </div>
-      );
-    }
-    return <p key={i}>{paragraph}</p>;
+  const handleReadArticle = (post: BlogPost) => {
+    const slug = post.slug || post.id;
+    navigate(`/${language}/blog/${slug}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -195,8 +160,15 @@ export const Blog: React.FC<BlogProps> = ({
         </div>
       </div>
 
-      {/* 3. Articles Grid */}
-      {filteredPosts.length === 0 ? (
+      {/* 3. Articles Grid / Loading State */}
+      {loading ? (
+        <div className="text-center py-24 space-y-3">
+          <Loader2 className="w-8 h-8 mx-auto text-blue-500 animate-spin" />
+          <p className="text-xs text-zinc-400 font-mono">
+            {language === "fr" ? "Chargement des articles..." : "Loading articles..."}
+          </p>
+        </div>
+      ) : filteredPosts.length === 0 ? (
         <div className="text-center py-16 space-y-3 glass-card rounded-2xl">
           <BookOpen className="w-8 h-8 mx-auto text-zinc-500" />
           <p className="text-sm text-zinc-400">{t.blog.noResults}</p>
@@ -213,7 +185,7 @@ export const Blog: React.FC<BlogProps> = ({
                 {/* Optional Cover Image Banner */}
                 {post.coverImage && (
                   <div
-                    onClick={() => setActivePost(post)}
+                    onClick={() => handleReadArticle(post)}
                     className="w-full h-44 sm:h-52 rounded-xl overflow-hidden cursor-pointer relative group-hover:opacity-95 transition-opacity border border-white/10"
                   >
                     <img
@@ -244,7 +216,7 @@ export const Blog: React.FC<BlogProps> = ({
                 {/* Title & Summary */}
                 <div>
                   <h2
-                    onClick={() => setActivePost(post)}
+                    onClick={() => handleReadArticle(post)}
                     className={`text-lg sm:text-xl font-bold transition-colors leading-snug cursor-pointer ${
                       theme === "dark" ? "text-white group-hover:text-blue-300" : "text-slate-900 group-hover:text-blue-600"
                     }`}
@@ -299,19 +271,19 @@ export const Blog: React.FC<BlogProps> = ({
                 <div className="flex items-center gap-2 text-xs">
                   <div className="w-7 h-7 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0 border border-white/20">
                     {profilePhoto ? (
-                      <img src={profilePhoto} alt={post.author.name} className="w-full h-full object-cover" />
+                      <img src={profilePhoto} alt={post.author?.name || "Capin Akpado"} className="w-full h-full object-cover" />
                     ) : (
                       <span>CA</span>
                     )}
                   </div>
                   <span className={`font-medium ${theme === "dark" ? "text-zinc-300" : "text-slate-700"}`}>
-                    {post.author.name}
+                    {post.author?.name || "Capin Akpado"}
                   </span>
                 </div>
 
                 <button
                   id={`read-article-${post.id}`}
-                  onClick={() => setActivePost(post)}
+                  onClick={() => handleReadArticle(post)}
                   className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20 active:scale-95"
                 >
                   <span>{t.blog.readArticle}</span>
@@ -321,154 +293,6 @@ export const Blog: React.FC<BlogProps> = ({
           ))}
         </div>
       )}
-
-      {/* 4. Full Article Reader Modal */}
-      {activePost && (
-        <div
-          id="article-reader-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200"
-          onClick={() => setActivePost(null)}
-        >
-          <div
-            className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl glass-panel p-5 sm:p-8 md:p-10 text-left shadow-2xl space-y-6 ${
-              theme === "dark" ? "text-white" : "text-slate-900"
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Navigation Top */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <button
-                onClick={() => setActivePost(null)}
-                className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-400 font-semibold"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{t.blog.backToArticles}</span>
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleShare(activePost)}
-                  className="px-3 py-1.5 rounded-xl glass-card text-xs flex items-center gap-1.5 text-zinc-400 hover:text-white"
-                  title="Partager"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>{copiedLink ? "Lien copié !" : t.blog.shareArticle}</span>
-                </button>
-                <button
-                  onClick={() => setActivePost(null)}
-                  className="p-1.5 rounded-xl glass-card text-zinc-400 hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Cover Image in Modal */}
-            {activePost.coverImage && (
-              <div className="w-full h-56 sm:h-72 rounded-2xl overflow-hidden border border-white/15 shadow-2xl">
-                <img
-                  src={activePost.coverImage}
-                  alt={activePost.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-
-            {/* Article Header */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1 rounded-md bg-blue-500/10 text-blue-500 border border-blue-500/30 text-xs font-mono font-semibold">
-                  {activePost.category}
-                </span>
-                <span className={`text-xs font-mono ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
-                  {activePost.publishedDate} • {activePost.readTime} {t.blog.readTime}
-                </span>
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-tight">
-                {activePost.title}
-              </h1>
-
-              {/* Author Bar */}
-              <div className="flex items-center gap-3 pt-2">
-                <div className="w-10 h-10 rounded-xl overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0 border border-white/20">
-                  {profilePhoto ? (
-                    <img src={profilePhoto} alt={activePost.author.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span>CA</span>
-                  )}
-                </div>
-                <div>
-                  <div className="font-bold text-sm">{activePost.author.name}</div>
-                  <div className={`text-xs font-mono ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
-                    {activePost.author.role}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Key Takeaways Box */}
-            {activePost.keyTakeaways && activePost.keyTakeaways.length > 0 && (
-              <div className={`p-5 rounded-2xl border space-y-3 ${
-                theme === "dark" ? "bg-blue-500/5 border-blue-500/30" : "bg-blue-50 border-blue-200"
-              }`}>
-                <div className="text-blue-500 font-bold flex items-center gap-2 text-sm font-mono">
-                  <Sparkles className="w-4 h-4" /> {t.blog.keyTakeaways}
-                </div>
-                <ul className="space-y-2">
-                  {activePost.keyTakeaways.map((takeaway, i) => (
-                    <li key={i} className={`flex items-start gap-2 text-xs sm:text-sm ${
-                      theme === "dark" ? "text-zinc-200" : "text-slate-700"
-                    }`}>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{takeaway}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Article Body Content */}
-            <div className={`space-y-4 text-sm sm:text-base leading-relaxed ${
-              theme === "dark" ? "text-zinc-300" : "text-slate-700"
-            }`}>
-              {activePost.content.map((paragraph, i) => renderParagraphContent(paragraph, i))}
-            </div>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2 pt-4 border-t border-white/10">
-              {activePost.tags.map((tagItem, i) => (
-                <span
-                  key={i}
-                  className={`text-xs px-3 py-1 rounded-lg font-mono border ${
-                    theme === "dark" ? "glass-card text-zinc-300" : "bg-slate-100 text-slate-700 border-slate-200"
-                  }`}
-                >
-                  #{tagItem}
-                </span>
-              ))}
-            </div>
-
-            {/* Bottom CTA */}
-            <div className="p-6 rounded-2xl glass-card border border-blue-500/30 text-center space-y-4">
-              <h4 className="font-bold text-base">{t.blog.ctaArticleTitle}</h4>
-              <button
-                id="blog-modal-contact-cta"
-                onClick={() => {
-                  setActivePost(null);
-                  onContactClick();
-                }}
-                className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-600/30 transition-all inline-flex items-center gap-2"
-              >
-                <span>{t.blog.ctaArticleBtn}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };

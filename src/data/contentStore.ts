@@ -85,16 +85,19 @@ const DEFAULT_SETTINGS: SiteSettings = {
   metric3LabelEn: "Type-safe & Scalable",
 
   // About Page Defaults
-  aboutRoleFr: "Architecte Solutions Web & Intelligence Artificielle",
-  aboutRoleEn: "AI Solutions & Web Architect",
-  aboutShortBioFr: "Ingénieur passionné par la convergence entre développement web moderne (React 19, TypeScript) et intelligence artificielle appliquée. J'accompagne les entreprises dans la création de solutions logicielles qui automatisent leurs processus clés.",
-  aboutShortBioEn: "Engineer passionate about the convergence between modern web development (React 19, TypeScript) and applied artificial intelligence. I empower companies to craft digital solutions that automate their core operations.",
-  aboutBioFr: "Spécialiste de la conception d'applications web d'élite et du déploiement d'agents IA autonomes. J'aide les dirigeants, startups et équipes ambitieuses à automatiser leurs processus métiers critiques et à accélérer leur croissance grâce à des solutions robustes, esthétiques et pérennes.",
-  aboutBioEn: "Specialist in engineering elite web applications and deploying autonomous AI agents. I empower founders, SMBs, and modern teams to automate high-friction workflows and scale their digital capabilities through robust, elegant software.",
-  aboutPhilosophyFr: "Je crois en une ingénierie pragmatique : chaque ligne de code et chaque agent IA doit résoudre un problème réel, générer un gain de temps tangible et s'intégrer harmonieusement dans votre écosystème.",
-  aboutPhilosophyEn: "I believe in pragmatic engineering: every line of code and AI agent must solve a real business challenge, deliver measurable ROI, and seamlessly integrate into your workflow.",
-  aboutExperienceYears: "+5 ans",
-  aboutCompletedProjects: "40+ projets",
+  aboutRoleFr: "Développeur Web, Mobile & IA",
+  aboutRoleEn: "Web, Mobile & AI Developer",
+  
+  aboutShortBioFr: "Développeur passionné combinant création logicielle moderne (React, Flutter, IA), expertise en stratégie digitale (SEO, Marketing) et diplômé en Gestion des Ressources Humaines. J'accompagne les entreprises dans la conception d'applications performantes et optimisées pour la croissance.",
+  aboutShortBioEn: "Developer passionate about combining modern software creation (React, Flutter, AI), digital strategy expertise (SEO, Marketing), and holding a Bachelor's degree in Human Resources. I help businesses build high-performance, growth-ready applications.",
+  
+  aboutBioFr: "Fort d'un parcours transversal combinant une licence en Gestion des Ressources Humaines, une solide expérience en rédaction web SEO, community management et marketing digital, je conçois des sites web, applications web, applications mobiles et agents IA autonomes. Cette double expertise technique et stratégique me permet de concevoir des solutions applicatives parfaitement référencées, axées sur l'expérience utilisateur et alignées avec les enjeux organisationnels des entreprises.",
+  aboutBioEn: "With a multifaceted background combining a Bachelor's degree in Human Resources Management and extensive experience in SEO copywriting, community management, and digital marketing, I engineer websites, web platforms, mobile apps, and autonomous AI agents. This dual technical and strategic expertise allows me to build fully search-optimized, user-centric software aligned with core business operations.",
+  
+  aboutPhilosophyFr: "Je crois en une ingénierie pragmatique et sobre : la technologie n'a de sens que si elle résout un problème réel avec élégance. Chaque ligne de code, chaque interface et chaque automatisation doit simplifier l'expérience humaine, éliminer la friction inutile et apporter une valeur mesurable et durable.",
+  aboutPhilosophyEn: "I believe in pragmatic and purposeful engineering: technology only matters if it elegantly solves a real-world problem. Every line of code, interface, and automated workflow must simplify human effort, remove friction, and deliver measurable, long-term value.",
+  aboutExperienceYears: "5+ ans",
+  aboutCompletedProjects: "30+ projets",
   aboutSatisfactionRate: "100%",
 
   // Contact Page Defaults

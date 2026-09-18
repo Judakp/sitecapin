@@ -11,7 +11,7 @@ export const blogPostsFr: BlogPost[] = [
     readTime: "6",
     author: {
       name: "Capin Akpado",
-      role: "Architecte Solutions Web & IA",
+      role: "Développeur Web, Mobile & IA",
     },
     tags: ["Intelligence Artificielle", "Automatisation", "Productivité", "PME"],
     keyTakeaways: [
@@ -41,7 +41,7 @@ export const blogPostsFr: BlogPost[] = [
     readTime: "8",
     author: {
       name: "Capin Akpado",
-      role: "Architecte Solutions Web & IA",
+      role: "Développeur Web, Mobile & IA",
     },
     tags: ["React", "TypeScript", "Architecture Web", "Performance", "Next.js"],
     keyTakeaways: [
@@ -70,7 +70,7 @@ export const blogPostsFr: BlogPost[] = [
     readTime: "5",
     author: {
       name: "Capin Akpado",
-      role: "Architecte Solutions Web & IA",
+      role: "Développeur Web, Mobile & IA",
     },
     tags: ["Automatisation", "Productivité", "Zapier / Make", "CRM"],
     keyTakeaways: [

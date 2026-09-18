@@ -78,7 +78,7 @@ export const translations = {
       valuesTitle: "Mes Valeurs & Principes de Travail",
       values: [
         {
-          title: "Artisanat & Rigueur du Code",
+          title: "Simplicité & Rigueur du Code",
           desc: "Un code propre, documenté, hautement typé et testé pour une évolutivité sans faille."
         },
         {
@@ -87,7 +87,7 @@ export const translations = {
         },
         {
           title: "Transparence & Pédagogie",
-          desc: "Zéro jargon obscur. Des points d'étape réguliers et des démonstrations concrètes à chaque jalon."
+          desc: "Zéro jargon obscur. Des explications simples, un suivi régulier et des présentations claires de votre projet à chaque étape."
         },
         {
           title: "Sécurité & Confidentialité IA",
@@ -97,22 +97,22 @@ export const translations = {
 
       timelineTitle: "Moments Clés & Réalisations",
       timeline: [
-        {
-          year: "2026",
-          title: "Intégration d'Agents Autonomes & Applications Mobiles",
-          desc: "Création de workflows d'agents intelligents basés sur les derniers modèles de raisonnement intégrés aux ERP/CRM et applications mobiles."
-        },
-        {
-          year: "2024 - 2025",
-          title: "Développement d'Applications Web, Mobile & SaaS",
-          desc: "Conception de plateformes SaaS multi-tenants, applications mobiles Flutter/React Native et portails clients sécurisés."
-        },
-        {
-          year: "2022 - 2023",
-          title: "Automatisation de Processus Métiers & Workflows",
-          desc: "Mise en place d'architectures API, synchronisations de bases de données et pipelines d'automatisation no-code / low-code."
-        }
-      ],
+  {
+    year: "2026",
+    title: "Conception d'agents IA autonomes & workflows",
+    desc: "Création d'agents intelligents et de workflows automatisés basés sur les derniers modèles de LLM, intégrés aux applications web, mobiles et outils métiers."
+  },
+  {
+    year: "2024 - 2025",
+    title: "Développement d'applications Web, mobile & SaaS",
+    desc: "Développement de plateformes web sur-mesure, d'applications mobiles performantes et de solutions SaaS intuitives pour startups et PME."
+  },
+  {
+    year: "2018 - 2023",
+    title: "Rédaction SEO & Marketing digital",
+    desc: "Rédaction de contenus stratégiques B2B, gestion de campagnes marketing, community management et optimisation du référencement naturel (SEO)."
+  }
+],
 
       ctaTitle: "Vous souhaitez collaborer avec Capin Akpado ?",
       ctaDesc: "Que vous ayez un cahier des charges précis ou une simple idée à explorer, prenons 15 minutes pour échanger.",
@@ -427,7 +427,7 @@ export const translations = {
       valuesTitle: "Core Values & Work Principles",
       values: [
         {
-          title: "Code Craftsmanship & Rigor",
+          title: "Simplicity & Rigor",
           desc: "Clean, documented, strictly-typed code thoroughly tested for seamless scalability."
         },
         {
@@ -436,7 +436,7 @@ export const translations = {
         },
         {
           title: "Transparency & Clear Communication",
-          desc: "Zero obscure jargon. Continuous milestone updates with interactive working demos."
+          desc: "Zero obscure jargon. Simple explanations, regular updates, and clear walkthroughs of your project at every stage."
         },
         {
           title: "Security & AI Data Privacy",
@@ -446,23 +446,22 @@ export const translations = {
 
       timelineTitle: "Key Milestones & Journey",
       timeline: [
-        {
-          year: "2026",
-          title: "Autonomous Agents & Mobile Applications Integration",
-          desc: "Engineering multi-agent reasoning workflows deeply connected to business ERPs, CRMs, and mobile apps."
-        },
-        {
-          year: "2024 - 2025",
-          title: "Web Platforms, Mobile Apps & SaaS Development",
-          desc: "Building multi-tenant SaaS products, Flutter/React Native mobile applications, and secure client portals."
-        },
-        {
-          year: "2022 - 2023",
-          title: "Business Process Automation & Workflows",
-          desc: "Designing API architectures, database integrations, and automated pipelines with low-code / code orchestration."
-        }
-      ],
-
+  {
+    year: "2026",
+    title: "Autonomous AI Agents & Workflows",
+    desc: "Building intelligent agents and automated workflows leveraging state-of-the-art LLMs, seamlessly integrated into web, mobile, and business apps."
+  },
+  {
+    year: "2024 - 2025",
+    title: "Web, Mobile & SaaS Development",
+    desc: "Engineering custom web platforms, high-performance mobile apps, and intuitive SaaS solutions for startups and SMBs."
+  },
+  {
+    year: "2018 - 2023",
+    title: "SEO Copywriting & Digital Marketing",
+    desc: "B2B strategic content writing, marketing campaign management, community management, and search engine visibility optimization."
+  }
+],
       ctaTitle: "Ready to work with Capin Akpado?",
       ctaDesc: "Whether you have a complete technical specification or an early idea to explore, let's connect for 15 minutes.",
       ctaButton: "Book a discovery call with Capin",

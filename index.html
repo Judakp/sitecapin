@@ -16,6 +16,125 @@
   </head>
   <body class="bg-[#09090B] text-slate-100 antialiased selection:bg-blue-600 selection:text-white min-h-screen">
     <div id="root"></div>
+
+    <!-- Fallback sécurisé et élégant si JavaScript est désactivé -->
+    <noscript>
+      <style>
+        .noscript-wrapper {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          background-color: #09090b;
+          color: #f8fafc;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1.5rem;
+          font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+        }
+        .noscript-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 1.25rem;
+          padding: 2.5rem;
+          max-width: 580px;
+          width: 100%;
+          text-align: center;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+        .noscript-title {
+          font-size: 1.75rem;
+          font-weight: 800;
+          letter-spacing: -0.025em;
+          color: #ffffff;
+          margin-bottom: 0.5rem;
+        }
+        .noscript-subtitle {
+          color: #3b82f6;
+          font-size: 0.9rem;
+          font-weight: 600;
+          margin-bottom: 1.25rem;
+        }
+        .noscript-box {
+          background: rgba(0, 0, 0, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 0.875rem;
+          padding: 1.25rem;
+          text-align: left;
+          margin-bottom: 1.5rem;
+          font-size: 0.85rem;
+          color: #cbd5e1;
+          line-height: 1.6;
+        }
+        .noscript-box ul {
+          margin-top: 0.5rem;
+          padding-left: 1.25rem;
+        }
+        .noscript-box li {
+          margin-bottom: 0.35rem;
+        }
+        .noscript-notice {
+          font-size: 0.75rem;
+          color: #71717a;
+          margin-bottom: 1.5rem;
+          line-height: 1.5;
+        }
+        .noscript-actions {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: center;
+        }
+        .noscript-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.75rem 1.5rem;
+          border-radius: 0.75rem;
+          font-size: 0.85rem;
+          font-weight: 700;
+          text-decoration: none;
+          transition: all 0.2s ease;
+        }
+        .btn-fr {
+          background-color: #2563eb;
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-en {
+          background-color: rgba(255, 255, 255, 0.08);
+          color: #f1f5f9;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+      </style>
+
+      <div class="noscript-wrapper">
+        <div class="noscript-card">
+          <h1 class="noscript-title">Capin Judicael Akpado</h1>
+          <div class="noscript-subtitle">Développeur Web, Mobile & Agents IA Autonomes</div>
+
+          <div class="noscript-box">
+            <strong style="color: #ffffff;">Expertises & Services :</strong>
+            <ul>
+              <li>Développement sur-mesure d'applications Web, Mobile & SaaS</li>
+              <li>Conception & intégration d'agents IA intelligents</li>
+              <li>Optimisation de la visibilité sur les moteurs de recherche (SEO/GEO)</li>
+            </ul>
+          </div>
+
+          <p class="noscript-notice">
+            Pour profiter de l'expérience interactive complète et du simulateur IA, veuillez activer JavaScript.
+            <br />
+            <em>For the full interactive experience and AI simulator, please enable JavaScript.</em>
+          </p>
+
+          <div class="noscript-actions">
+            <a href="/fr/accueil" class="noscript-btn btn-fr">Version Française</a>
+            <a href="/en/home" class="noscript-btn btn-en">English Version</a>
+          </div>
+        </div>
+      </div>
+    </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
