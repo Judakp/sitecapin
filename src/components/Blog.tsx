@@ -49,7 +49,6 @@ export const Blog: React.FC<BlogProps> = ({
         if (error) {
           console.error("Erreur lors de la récupération Supabase:", error.message);
         } else if (data && isMounted) {
-          // Normalisation des données si les colonnes Supabase diffèrent de l'interface BlogPost
           const formattedPosts: BlogPost[] = data.map((item) => ({
             id: item.id,
             slug: item.slug,
@@ -86,11 +85,13 @@ export const Blog: React.FC<BlogProps> = ({
   // Unique categories
   const categories = ["all", ...Array.from(new Set(posts.map((p) => p.category)))];
 
+  // Filtrage sécurisé des articles
   const filteredPosts = posts.filter((post) => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      (post.title || "").toLowerCase().includes(query) ||
+      (post.summary || "").toLowerCase().includes(query) ||
+      (post.tags || []).some((tag) => tag.toLowerCase().includes(query));
 
     const matchesCategory =
       selectedCategory === "all" || post.category === selectedCategory;

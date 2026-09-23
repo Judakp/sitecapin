@@ -32,6 +32,7 @@ import confetti from "canvas-confetti";
 import { Language, ThemeMode } from "../types";
 import { useTranslation } from "../data/translations";
 import { supabase } from "../lib/supabase";
+import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface PlaygroundProps {
   language: Language;
@@ -381,6 +382,16 @@ export const Playground: React.FC<PlaygroundProps> = ({
   return (
     <div id="test-ai-page" className="py-12 sm:py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
       
+      {/* ================= BALISE SEO ================= */}
+      <SEO 
+        title={language === "fr" ? "Simulateur IA & Blueprint | Capin Akpado" : "AI Simulator & Blueprint | Capin Akpado"}
+        description={language === "fr" 
+          ? "Testez mon moteur d'intelligence artificielle en direct. Générez une architecture sur-mesure et un plan d'action pour votre entreprise en 1 clic." 
+          : "Test my artificial intelligence engine live. Generate a custom architecture and action plan for your business in 1 click."}
+        language={language}
+        url={`https://capinakpado.com/${language}/test-ai`}
+      />
+
       {/* 1. Header Section */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono font-medium tracking-wide bg-blue-500/10 text-blue-500 border border-blue-500/25">
@@ -890,7 +901,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
 
         {/* Right Side: Results Display Panel */}
         <div
-          className={`lg:col-span-8 rounded-2xl sm:rounded-3xl border p-6 sm:p-8 flex flex-col justify-between min-h-[500px] relative overflow-hidden transition-all ${
+          className={`lg:col-span-8 rounded-2xl sm:rounded-3xl border p-6 sm:p-8 flex flex-col justify-between min-h-125 relative overflow-hidden transition-all ${
             isDark
               ? "bg-zinc-900/80 border-zinc-800"
               : "bg-white border-slate-200 shadow-sm"
@@ -994,7 +1005,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                             <span className={`text-[11px] font-semibold ${isDark ? "text-zinc-400" : "text-slate-600"}`}>
                               {metric.label}
                             </span>
-                            <div className={`p-1.5 rounded-lg bg-gradient-to-br ${metric.color} text-white shadow-sm`}>
+                            <div className={`p-1.5 rounded-lg bg-linear-to-br ${metric.color} text-white shadow-sm`}>
                               <IconComp className="w-3.5 h-3.5" />
                             </div>
                           </div>
@@ -1100,7 +1111,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
               ) : (
                 <div className="space-y-3">
                   <div
-                    className={`p-5 rounded-2xl font-mono text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto border max-h-[420px] ${
+                    className={`p-5 rounded-2xl font-mono text-xs whitespace-pre-wrap leading-relaxed overflow-x-auto border max-h-105 ${
                       isDark
                         ? "bg-black/80 text-zinc-200 border-zinc-800"
                         : "bg-slate-900 text-slate-100 border-slate-800"
@@ -1116,7 +1127,7 @@ export const Playground: React.FC<PlaygroundProps> = ({
                 <button
                   id="send-to-contact-btn"
                   onClick={() => onSendToContact(analysisResult.rawBlueprint)}
-                  className="w-full sm:flex-1 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all cursor-pointer border border-white/20"
+                  className="w-full sm:flex-1 py-3.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all cursor-pointer border border-white/20"
                 >
                   <Send className="w-4 h-4" />
                   <span>{t.testAi.sendToContactBtn}</span>

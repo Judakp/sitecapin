@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   ArrowUp,
   Mail,
@@ -15,6 +16,7 @@ import { Language, ThemeMode, PageView, LogoConfig } from "../types";
 import { useTranslation } from "../data/translations";
 import { getLogoConfig } from "../data/contentStore";
 import logoPrincipal from "../assets/images/logo-principal.svg";
+import { reopenCookieConsent } from "./CookieConsentBanner";
 
 interface FooterProps {
   language: Language;
@@ -120,19 +122,6 @@ export const Footer: React.FC<FooterProps> = ({
             <p className="text-xs sm:text-sm leading-relaxed max-w-sm">
               {t.footer.roleTitle}. {t.hero.subtitle}
             </p>
-
-            {/* Badges de compétences clés */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <Code2 className="w-3 h-3" /> Web Dev
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                <Smartphone className="w-3 h-3" /> Mobile Flutter
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                <Bot className="w-3 h-3" /> AI Integration
-              </span>
-            </div>
 
             {/* Réseaux sociaux */}
             <div className="flex items-center gap-2.5 pt-2">
@@ -339,10 +328,28 @@ export const Footer: React.FC<FooterProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-[11px] font-mono text-zinc-500 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-blue-400" /> {t.footer.geminiPowered}
-            </span>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-end">
+            <Link
+              to={language === "fr" ? "/fr/conditions-utilisation" : "/en/terms-of-use"}
+              className="text-[11px] font-medium text-zinc-500 transition-colors hover:text-blue-500"
+            >
+              {language === "fr" ? "Conditions d'utilisation" : "Terms of Use"}
+            </Link>
+
+            <Link
+              to={language === "fr" ? "/fr/confidentialite" : "/en/privacy-policy"}
+              className="text-[11px] font-medium text-zinc-500 transition-colors hover:text-blue-500"
+            >
+              {language === "fr" ? "Politique de confidentialité" : "Privacy Policy"}
+            </Link>
+
+            <button
+              type="button"
+              onClick={reopenCookieConsent}
+              className="text-[11px] font-medium text-zinc-500 transition-colors hover:text-blue-500"
+            >
+              {language === "fr" ? "Gérer mes préférences" : "Manage preferences"}
+            </button>
 
             <button
               onClick={scrollToTop}

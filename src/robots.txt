@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /adminboss
+Disallow: /api/
+Disallow: /node_modules/
+Disallow: /src/
+
+Sitemap: https://capinakpado.com/sitemap.xml

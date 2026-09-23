@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <url>
+    <loc>https://capinakpado.com/fr/accueil</loc>
+    <lastmod>2026-09-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/accueil"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://capinakpado.com/en/home"/>
+  </url>
+  <url>
+    <loc>https://capinakpado.com/en/home</loc>
+    <lastmod>2026-09-23</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/accueil"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/home"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://capinakpado.com/en/home"/>
+  </url>
+
+  <url><loc>https://capinakpado.com/fr/a-propos</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/about"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/a-propos"/></url>
+  <url><loc>https://capinakpado.com/en/about</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/a-propos"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/about"/></url>
+
+  <url><loc>https://capinakpado.com/fr/services</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/services"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/services"/></url>
+  <url><loc>https://capinakpado.com/en/services</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/services"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/services"/></url>
+
+  <url><loc>https://capinakpado.com/fr/portfolio</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/portfolio"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/portfolio"/></url>
+  <url><loc>https://capinakpado.com/en/portfolio</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/portfolio"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/portfolio"/></url>
+
+  <url><loc>https://capinakpado.com/fr/audit-ia</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-audit"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/audit-ia"/></url>
+  <url><loc>https://capinakpado.com/en/ai-audit</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/audit-ia"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-audit"/></url>
+
+  <url><loc>https://capinakpado.com/fr/blog</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog"/></url>
+  <url><loc>https://capinakpado.com/en/blog</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog"/></url>
+
+  <url><loc>https://capinakpado.com/fr/guide-ia-pro</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-pro-guide"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/guide-ia-pro"/></url>
+  <url><loc>https://capinakpado.com/en/ai-pro-guide</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/guide-ia-pro"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-pro-guide"/></url>
+
+  <url><loc>https://capinakpado.com/fr/contact</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/contact"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/contact"/></url>
+  <url><loc>https://capinakpado.com/en/contact</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/contact"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/contact"/></url>
+
+  <url><loc>https://capinakpado.com/fr/services/agents-ia-autonomes</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/services/agents-ia-autonomes"/></url>
+  <url><loc>https://capinakpado.com/en/services/agents-ia-autonomes</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/services/agents-ia-autonomes"/></url>
+
+  <url><loc>https://capinakpado.com/fr/services/developpement-web-mobile</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/services/developpement-web-mobile"/></url>
+  <url><loc>https://capinakpado.com/en/services/developpement-web-mobile</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/services/developpement-web-mobile"/></url>
+
+  <url><loc>https://capinakpado.com/fr/services/seo-geo-visibilite-ia</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/services/seo-geo-visibilite-ia"/></url>
+  <url><loc>https://capinakpado.com/en/services/seo-geo-visibilite-ia</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/services/seo-geo-visibilite-ia"/></url>
+
+  <url><loc>https://capinakpado.com/fr/conditions-utilisation</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/terms-of-use"/></url>
+  <url><loc>https://capinakpado.com/en/terms-of-use</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/conditions-utilisation"/></url>
+
+  <url><loc>https://capinakpado.com/fr/confidentialite</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/privacy-policy"/></url>
+  <url><loc>https://capinakpado.com/en/privacy-policy</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/confidentialite"/></url>
+
+</urlset>

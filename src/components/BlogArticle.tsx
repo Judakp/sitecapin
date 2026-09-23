@@ -1,8 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, Calendar, Share2, Sparkles, CheckCircle2 } from "lucide-react";
-import { Language, ThemeMode } from "../types";
-import { getBlogPosts } from "../data/blogData";
+import {
+  ArrowLeft,
+  Clock,
+  Calendar,
+  Share2,
+  Sparkles,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
+import { BlogPost, Language, ThemeMode } from "../types";
+import { supabase } from "../lib/supabase";
+import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface BlogArticleProps {
   language: Language;
@@ -19,17 +28,82 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
   const navigate = useNavigate();
   const isDark = theme === "dark";
 
-  const posts = getBlogPosts(language);
-  const article = posts.find((p) => p.slug === slug || p.id === slug);
+  const [article, setArticle] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Mettre à jour le titre SEO de la page dynamiquement
   useEffect(() => {
-    if (article) {
-      document.title = `${article.title} | Capin Akpado`;
-    } else {
-      document.title = "Article non trouvé | Capin Akpado";
+    let isMounted = true;
+
+    async function fetchArticle() {
+      if (!slug) return;
+
+      try {
+        setLoading(true);
+
+        // Recherche par slug ET par langue active dans Supabase
+        const { data, error } = await supabase
+          .from("blog_posts")
+          .select("*")
+          .eq("slug", slug)
+          .eq("language", language)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Erreur lors de la récupération de l'article :", error.message);
+        } else if (data && isMounted) {
+          const formattedArticle: BlogPost = {
+            id: data.id,
+            slug: data.slug,
+            title: data.title,
+            summary: data.summary,
+            content: data.content,
+            category: data.category,
+            readTime: data.read_time,
+            publishedDate: data.published_date,
+            coverImage: data.cover_image,
+            tags: data.tags || [],
+            keyTakeaways: data.key_takeaways || [],
+            author: data.author,
+          };
+          setArticle(formattedArticle);
+        } else if (isMounted) {
+          setArticle(null);
+        }
+      } catch (err) {
+        console.error("Erreur réseau Supabase :", err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
-  }, [article]);
+
+    fetchArticle();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug, language]);
+
+  const handleShare = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-32 text-center space-y-3">
+        <Loader2 className="w-8 h-8 mx-auto text-blue-500 animate-spin" />
+        <p className="text-xs text-zinc-400 font-mono">
+          {language === "fr" ? "Chargement de l'article..." : "Loading article..."}
+        </p>
+      </div>
+    );
+  }
 
   if (!article) {
     return (
@@ -38,8 +112,8 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
           {language === "fr" ? "Article non trouvé" : "Article Not Found"}
         </h1>
         <p className="text-zinc-400 text-sm">
-          {language === "fr" 
-            ? "L'article que vous cherchez n'existe pas ou a été déplacé." 
+          {language === "fr"
+            ? "L'article que vous cherchez n'existe pas ou a été déplacé."
             : "The article you are looking for does not exist or has been moved."}
         </p>
         <button
@@ -53,11 +127,26 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
     );
   }
 
+  // Conversion du contenu en chaîne HTML propre
+  const htmlContent = Array.isArray(article.content)
+    ? article.content.join("")
+    : article.content || "";
+
   return (
     <article className="py-12 sm:py-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       
-      {/* Bouton Retour */}
-      <div>
+      {/* BALISE SEO DYNAMIQUE */}
+      <SEO 
+        title={article.title}
+        description={article.summary}
+        image={article.coverImage}
+        language={language}
+        url={`https://capinakpado.com/${language}/blog/${article.slug}`}
+        type="article"
+      />
+
+      {/* Barre de navigation haute */}
+      <div className="flex items-center justify-between">
         <button
           onClick={() => navigate(`/${language}/blog`)}
           className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
@@ -68,6 +157,18 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>{language === "fr" ? "Tous les articles" : "All Articles"}</span>
+        </button>
+
+        <button
+          onClick={handleShare}
+          className={`px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 border transition-all ${
+            isDark
+              ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+              : "bg-slate-100 border-slate-300 text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Share2 className="w-3.5 h-3.5" />
+          <span>{copiedLink ? (language === "fr" ? "Lien copié !" : "Link copied!") : (language === "fr" ? "Partager" : "Share")}</span>
         </button>
       </div>
 
@@ -98,18 +199,18 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
         </p>
       </div>
 
-      {/* Image de couverture si présente */}
+      {/* Image de couverture */}
       {article.coverImage && (
-        <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl">
+        <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl max-h-[420px]">
           <img
             src={article.coverImage}
             alt={article.title}
-            className="w-full max-h-[420px] object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
       )}
 
-      {/* BLOC : CE QUE JE RETIENS (Keepers preserved) */}
+      {/* BLOC : CE QUE JE RETIENS */}
       {article.keyTakeaways && article.keyTakeaways.length > 0 && (
         <div className="p-6 rounded-2xl bg-blue-500/10 border border-blue-500/25 space-y-3">
           <h3 className="text-sm font-extrabold text-blue-400 uppercase tracking-wider flex items-center gap-2 font-mono">
@@ -127,23 +228,18 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
         </div>
       )}
 
-      {/* Contenu principal de l'article */}
-      <div className={`prose max-w-none text-sm sm:text-base leading-relaxed space-y-4 ${
-        isDark ? "text-zinc-300" : "text-slate-700"
-      }`}>
-        {Array.isArray(article.content) ? (
-          article.content.map((paragraph, index) => (
-            <p key={index}>{paragraph}</p>
-          ))
-        ) : (
-          <p>{article.content}</p>
-        )}
-      </div>
+      {/* Contenu principal de l'article (Rendu HTML enrichi TipTap) */}
+      <div
+        className={`prose ${
+          isDark ? "prose-invert text-zinc-300" : "text-slate-700"
+        } max-w-none text-sm sm:text-base leading-relaxed space-y-4 prose-headings:font-bold prose-a:text-blue-400 prose-blockquote:border-l-blue-500`}
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
 
       {/* Footer Article & CTA Contact */}
       <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="text-xs text-zinc-400 font-mono">
-          Auteur : <strong className="text-white">{article.author.name}</strong> ({article.author.role})
+          Auteur : <strong className="text-white">{article.author?.name || "Capin Akpado"}</strong> ({article.author?.role || "Architecte IA & Full-Stack"})
         </div>
 
         <button

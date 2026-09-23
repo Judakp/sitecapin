@@ -161,3 +161,31 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #3B82F6;
 }
+
+/* Optimisation du rendu graphique sur mobile (Phase 5) */
+@media (max-width: 768px) {
+  .glass-card,
+  .glass-card-hover,
+  .glass-panel {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+  
+  .blur-\[100px\],
+  .blur-\[120px\],
+  .blur-\[150px\] {
+    filter: blur(40px) !important;
+  }
+}
+
+/* Désactivation des transitions CSS pour les appareils en mode "mouvements réduits" */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

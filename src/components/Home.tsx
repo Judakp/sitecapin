@@ -31,6 +31,7 @@ import {
   getProfilePhoto,
 } from "../data/contentStore";
 import photoCapinWebp from "../assets/images/photo-capin.webp";
+import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface HomeProps {
   language: Language;
@@ -78,6 +79,16 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
 
   return (
     <div id="home-page" className="space-y-24 pb-20">
+      
+      {/* BALISE SEO POUR L'ACCUEIL */}
+      <SEO 
+        title={language === "fr" ? "Accueil | Capin Akpado - Architecte IA & Web" : "Home | Capin Akpado - AI & Web Architect"}
+        description={language === "fr" 
+          ? "Accompagnement sur-mesure en développement web, création d'applications mobiles et intégration d'agents IA autonomes pour votre entreprise." 
+          : "Custom web development, mobile apps, and autonomous AI agents integration for your business."}
+        language={language}
+        url={`https://capinakpado.com/${language}/${language === "fr" ? "accueil" : "home"}`}
+      />
 
       {/* 1. Hero Section */}
       <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
@@ -86,7 +97,7 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
         <div className="absolute top-1/3 left-1/4 w-[350px] h-[280px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
             
             {/* Left Column: Pitch & CTAs */}
             <div className="lg:col-span-7 space-y-7 text-left">
@@ -290,7 +301,7 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                     <button
                       id="hero-try-sim-btn"
                       onClick={() => onNavigate("test-ai")}
-                      className="w-full mt-2 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-sans font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-blue-600/30 border border-white/20"
+                      className="w-full mt-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-sans font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-blue-600/30 border border-white/20"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>{t.hero.tryInTestAi}</span>

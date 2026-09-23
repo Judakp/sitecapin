@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   FolderKanban,
   ArrowRight,
@@ -16,6 +17,7 @@ import {
 import { CaseStudy, Language, ThemeMode } from "../types";
 import { getCaseStudies } from "../data/portfolioData";
 import { useTranslation } from "../data/translations";
+import { SEO } from "./SEO";
 
 interface PortfolioProps {
   language: Language;
@@ -53,6 +55,16 @@ export const Portfolio: React.FC<PortfolioProps> = ({
   return (
     <div id="portfolio-page" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
       
+      {/* BALISE SEO POUR LE PORTFOLIO */}
+      <SEO 
+        title={language === "fr" ? "Portfolio & Études de cas | Capin Akpado" : "Portfolio & Case Studies | Capin Akpado"}
+        description={language === "fr" 
+          ? "Explorez mes projets récents et études de cas en développement web, applications mobiles et intégration d'IA pour des entreprises variées." 
+          : "Explore my recent projects and case studies in web development, mobile apps, and AI integration for various businesses."}
+        language={language}
+        url={`https://capinakpado.com/${language}/portfolio`}
+      />
+
       {/* Page Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-card text-blue-500 text-xs font-semibold uppercase tracking-wider">
@@ -92,11 +104,20 @@ export const Portfolio: React.FC<PortfolioProps> = ({
         ))}
       </div>
 
-      {/* Case Studies Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {filteredStudies.map((study) => (
-          <div
+      {/* Case Studies Grid (Animated with Framer Motion) */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="grid grid-cols-1 md:grid-cols-2 gap-8"
+      >
+        {filteredStudies.map((study, index) => (
+          <motion.div
             key={study.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
+            whileHover={{ y: -4 }}
             id={`study-card-${study.id}`}
             className="glass-card-hover group relative rounded-2xl p-6 sm:p-8 flex flex-col justify-between"
           >
@@ -197,16 +218,16 @@ export const Portfolio: React.FC<PortfolioProps> = ({
               <button
                 id={`view-study-${study.id}`}
                 onClick={() => setActiveModalStudy(study)}
-                className="w-full py-2.5 rounded-xl glass-card hover:bg-blue-600 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                className="w-full py-2.5 rounded-xl glass-card hover:bg-blue-600 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <span>{t.portfolio.viewDetails}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Tech Stack & Engineering Standards Banner */}
       <div className="rounded-2xl glass-card p-6 sm:p-8 space-y-4">
@@ -225,155 +246,164 @@ export const Portfolio: React.FC<PortfolioProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-  {[
-    "Frontend & UI/UX Moderne",
-    "Architecture TypeScript & Web",
-    "Ingénierie d'Agents IA & LLM",
-    "Automatisation & Workflows",
-    "Bases de Données & Cloud",
-    "Conception & Intégration d'APIs",
-    "Déploiement & DevOps",
-    "SEO & Stratégie Content Marketing"
-  ].map((skill, i) => (
-    <div key={i} className="p-2.5 rounded-xl glass-card flex items-center gap-2 text-xs font-mono font-medium">
-      <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-      <span className="truncate">{skill}</span>
-    </div>
+          {[
+            "Frontend & UI/UX Moderne",
+            "Architecture TypeScript & Web",
+            "Ingénierie d'Agents IA & LLM",
+            "Automatisation & Workflows",
+            "Bases de Données & Cloud",
+            "Conception & Intégration d'APIs",
+            "Déploiement & DevOps",
+            "SEO & Stratégie Content Marketing"
+          ].map((skill, i) => (
+            <div key={i} className="p-2.5 rounded-xl glass-card flex items-center gap-2 text-xs font-mono font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span className="truncate">{skill}</span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Modal Detail */}
-      {activeModalStudy && (
-        <div
-          id="study-detail-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in duration-200"
-          onClick={() => setActiveModalStudy(null)}
-        >
-          <div
-            className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl glass-panel p-6 sm:p-8 text-left shadow-2xl space-y-6 ${
-              theme === "dark" ? "text-white" : "text-slate-900"
-            }`}
-            onClick={(e) => e.stopPropagation()}
+      {/* Modal Detail (Animated with Framer Motion AnimatePresence) */}
+      <AnimatePresence>
+        {activeModalStudy && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            id="study-detail-modal"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
+            onClick={() => setActiveModalStudy(null)}
           >
-            {/* Close Button */}
-            <button
-              id="close-study-modal"
-              onClick={() => setActiveModalStudy(null)}
-              className="absolute top-5 right-5 p-2 rounded-xl glass-card text-zinc-400 hover:text-white transition-colors"
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl glass-panel p-6 sm:p-8 text-left shadow-2xl space-y-6 ${
+                theme === "dark" ? "text-white" : "text-slate-900"
+              }`}
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="w-5 h-5" />
-            </button>
+              {/* Close Button */}
+              <button
+                id="close-study-modal"
+                onClick={() => setActiveModalStudy(null)}
+                className="absolute top-5 right-5 p-2 rounded-xl glass-card text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            {/* Header */}
-            <div className="pr-8 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-500 text-xs font-mono">
-                  {activeModalStudy.category}
-                </span>
-                <span className="text-xs text-emerald-500 font-bold font-mono">
-                  {activeModalStudy.badge}
-                </span>
-              </div>
-              <h3 className="text-2xl font-extrabold">
-                {activeModalStudy.title}
-              </h3>
-              <p className={`text-xs font-mono ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
-                {t.portfolio.client} {activeModalStudy.client}
-              </p>
-            </div>
-
-            {/* Details */}
-            <div className={`space-y-4 text-sm ${theme === "dark" ? "text-zinc-300" : "text-slate-700"}`}>
-              <div className={`p-4 rounded-xl border space-y-2 ${
-                theme === "dark" ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-200"
-              }`}>
-                <h4 className="font-bold text-rose-500 text-xs uppercase tracking-wider font-mono">
-                  {t.portfolio.modalProblem}
-                </h4>
-                <p className="leading-relaxed">{activeModalStudy.problem}</p>
+              {/* Header */}
+              <div className="pr-8 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-500 text-xs font-mono">
+                    {activeModalStudy.category}
+                  </span>
+                  <span className="text-xs text-emerald-500 font-bold font-mono">
+                    {activeModalStudy.badge}
+                  </span>
+                </div>
+                <h3 className="text-2xl font-extrabold">
+                  {activeModalStudy.title}
+                </h3>
+                <p className={`text-xs font-mono ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
+                  {t.portfolio.client} {activeModalStudy.client}
+                </p>
               </div>
 
-              <div className={`p-4 rounded-xl border space-y-2 ${
-                theme === "dark" ? "bg-blue-500/5 border-blue-500/20" : "bg-blue-50 border-blue-200"
-              }`}>
-                <h4 className="font-bold text-blue-500 text-xs uppercase tracking-wider font-mono">
-                  {t.portfolio.modalSolution}
-                </h4>
-                <p className="leading-relaxed">{activeModalStudy.solution}</p>
-              </div>
+              {/* Details */}
+              <div className={`space-y-4 text-sm ${theme === "dark" ? "text-zinc-300" : "text-slate-700"}`}>
+                <div className={`p-4 rounded-xl border space-y-2 ${
+                  theme === "dark" ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50 border-rose-200"
+                }`}>
+                  <h4 className="font-bold text-rose-500 text-xs uppercase tracking-wider font-mono">
+                    {t.portfolio.modalProblem}
+                  </h4>
+                  <p className="leading-relaxed">{activeModalStudy.problem}</p>
+                </div>
 
-              {/* Deliverables */}
-              <div className="space-y-2 pt-2">
-                <h4 className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 font-mono">
-                  <Layers className="w-3.5 h-3.5 text-blue-500" />
-                  {t.portfolio.modalDeliverables}
-                </h4>
-                <ul className="grid grid-cols-1 gap-2">
-                  {activeModalStudy.deliverables.map((d, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs p-2.5 rounded-lg glass-card">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{d}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Testimonial if present */}
-              {activeModalStudy.testimonial && (
-                <div className={`p-4 rounded-xl border space-y-2 relative ${
+                <div className={`p-4 rounded-xl border space-y-2 ${
                   theme === "dark" ? "bg-blue-500/5 border-blue-500/20" : "bg-blue-50 border-blue-200"
                 }`}>
-                  <Quote className="w-6 h-6 text-blue-500/30 absolute top-3 right-3" />
-                  <p className="italic text-xs sm:text-sm">
-                    « {activeModalStudy.testimonial.quote} »
-                  </p>
-                  <div className={`text-xs font-mono ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
-                    <strong className={theme === "dark" ? "text-white" : "text-slate-900"}>
-                      {activeModalStudy.testimonial.author}
-                    </strong> — {activeModalStudy.testimonial.role}, {activeModalStudy.testimonial.company}
-                  </div>
+                  <h4 className="font-bold text-blue-500 text-xs uppercase tracking-wider font-mono">
+                    {t.portfolio.modalSolution}
+                  </h4>
+                  <p className="leading-relaxed">{activeModalStudy.solution}</p>
                 </div>
-              )}
-            </div>
 
-            {/* Modal Bottom Actions */}
-            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
-              {activeModalStudy.liveUrl && (
-                <a
-                  href={activeModalStudy.liveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 border border-white/20"
+                {/* Deliverables */}
+                <div className="space-y-2 pt-2">
+                  <h4 className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                    <Layers className="w-3.5 h-3.5 text-blue-500" />
+                    {t.portfolio.modalDeliverables}
+                  </h4>
+                  <ul className="grid grid-cols-1 gap-2">
+                    {activeModalStudy.deliverables.map((d, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs p-2.5 rounded-lg glass-card">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>{d}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Testimonial if present */}
+                {activeModalStudy.testimonial && (
+                  <div className={`p-4 rounded-xl border space-y-2 relative ${
+                    theme === "dark" ? "bg-blue-500/5 border-blue-500/20" : "bg-blue-50 border-blue-200"
+                  }`}>
+                    <Quote className="w-6 h-6 text-blue-500/30 absolute top-3 right-3" />
+                    <p className="italic text-xs sm:text-sm">
+                      « {activeModalStudy.testimonial.quote} »
+                    </p>
+                    <div className={`text-xs font-mono ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
+                      <strong className={theme === "dark" ? "text-white" : "text-slate-900"}>
+                        {activeModalStudy.testimonial.author}
+                      </strong> — {activeModalStudy.testimonial.role}, {activeModalStudy.testimonial.company}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Bottom Actions */}
+              <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
+                {activeModalStudy.liveUrl && (
+                  <a
+                    href={activeModalStudy.liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 border border-white/20 cursor-pointer"
+                  >
+                    <span>Visiter le site en direct</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+
+                <button
+                  id="modal-cta-contact"
+                  onClick={() => {
+                    setActiveModalStudy(null);
+                    onContactClick();
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 border border-white/20 cursor-pointer"
                 >
-                  <span>Visiter le site en direct</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
+                  <span>{t.portfolio.discussSimilar}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
 
-              <button
-                id="modal-cta-contact"
-                onClick={() => {
-                  setActiveModalStudy(null);
-                  onContactClick();
-                }}
-                className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 border border-white/20"
-              >
-                <span>{t.portfolio.discussSimilar}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={() => setActiveModalStudy(null)}
+                  className="py-3 px-5 rounded-xl glass-card text-xs sm:text-sm font-medium transition-colors cursor-pointer"
+                >
+                  {t.portfolio.close}
+                </button>
+              </div>
 
-              <button
-                onClick={() => setActiveModalStudy(null)}
-                className="py-3 px-5 rounded-xl glass-card text-xs sm:text-sm font-medium transition-colors"
-              >
-                {t.portfolio.close}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

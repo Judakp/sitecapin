@@ -19,6 +19,7 @@ import {
 import { ServiceItem, Language, ThemeMode, PageView } from "../types";
 import { getServices, getMethodology } from "../data/portfolioData";
 import { useTranslation } from "../data/translations";
+import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface ServicesProps {
   language: Language;
@@ -61,6 +62,16 @@ export const Services: React.FC<ServicesProps> = ({
   return (
     <div id="services-page" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-24">
       
+      {/* BALISE SEO POUR SERVICES */}
+      <SEO 
+        title={language === "fr" ? "Services | Capin Akpado" : "Services | Capin Akpado"}
+        description={language === "fr" 
+          ? "Découvrez mes services spécialisés : développement web sur-mesure, applications mobiles, intégration d'IA et automatisation de processus." 
+          : "Discover my specialized services: custom web development, mobile applications, AI integration, and process automation."}
+        language={language}
+        url={`https://capinakpado.com/${language}/services`}
+      />
+
       {/* 1. Services Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-card text-blue-500 text-xs font-semibold uppercase tracking-wider">
@@ -297,4 +308,3 @@ export const Services: React.FC<ServicesProps> = ({
     </div>
   );
 };
-

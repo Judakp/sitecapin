@@ -3,12 +3,14 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import compression from "compression";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
+app.use(compression({ threshold: 1024 }));
 app.use(express.json({ limit: "1mb" }));
 
 /**
@@ -150,7 +152,7 @@ IMPORTANT :
 - Ne donne pas une réponse générique pouvant convenir à n'importe quelle entreprise.
 - Ne répète pas simplement les informations saisies.
 - Identifie les tâches réellement automatisables.
-- Propose des assistants IA cohérents avec le métier.
+- Propose assistants IA cohérents avec le métier.
 - Les économies de temps sont des ESTIMATIONS : ne les présente jamais comme des mesures réelles.
 - N'invente pas de logiciels qui n'ont pas été mentionnés.
 - Si une information manque, formule une hypothèse prudente plutôt que d'inventer un fait.
@@ -341,19 +343,6 @@ TRAVAIL DEMANDÉ :
  * ============================================================
  */
 
-/**
- * Schéma commun aux trois analyses.
- *
- * Le frontend de Playground.tsx attend exactement :
- * title
- * summary
- * metrics
- * diagnostics
- * architecture
- * gains
- * phases
- * rawBlueprint
- */
 const playgroundResponseSchema = {
   type: Type.OBJECT,
 
@@ -537,11 +526,6 @@ const playgroundResponseSchema = {
  * ============================================================
  * ANCIENNE ROUTE GEMINI
  * ============================================================
- *
- * Elle reste disponible pour d'éventuels autres composants du site.
- *
- * IMPORTANT :
- * aucun fallback local.
  */
 app.post("/api/gemini/generate", async (req, res) => {
   const {
@@ -575,11 +559,6 @@ app.post("/api/gemini/generate", async (req, res) => {
     let prompt = "";
     let responseSchema: any = null;
 
-    /**
-     * --------------------------------------------------------
-     * AUTOMATION
-     * --------------------------------------------------------
-     */
     if (moduleType === "automation") {
       systemInstruction = `
 Tu es un consultant senior en automatisation et intelligence artificielle.
@@ -696,11 +675,6 @@ Réponds exclusivement avec le JSON demandé.
         ],
       };
 
-    /**
-     * --------------------------------------------------------
-     * WEB ARCHITECT
-     * --------------------------------------------------------
-     */
     } else if (moduleType === "web_architect") {
       systemInstruction = `
 Tu es un architecte web senior spécialisé en UX, conversion,
@@ -804,11 +778,6 @@ Réponds exclusivement avec le JSON demandé.
         ],
       };
 
-    /**
-     * --------------------------------------------------------
-     * STUDIO APP
-     * --------------------------------------------------------
-     */
     } else if (moduleType === "studio_app") {
       systemInstruction = `
 Tu es un Product Manager senior spécialisé dans les applications
@@ -964,24 +933,14 @@ Réponds exclusivement avec le JSON demandé.
       });
     }
 
-    /**
-     * Appel réel à Gemini
-     *
-     * IMPORTANT :
-     * Il n'y a volontairement aucun fallback local.
-     */
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: prompt,
 
       config: {
         systemInstruction,
-
         responseMimeType: "application/json",
-
         responseSchema,
-
-        // Pas de temperature.
       },
     });
 
@@ -1035,17 +994,6 @@ Réponds exclusivement avec le JSON demandé.
  * ============================================================
  * PLAYGROUND — ROUTE PRINCIPALE
  * ============================================================
- *
- * Playground.tsx envoie :
- *
- * {
- *   tab,
- *   language,
- *   parameters
- * }
- *
- * Cette route produit directement le format AnalysisData attendu
- * par le composant React.
  */
 app.post("/api/analyze", async (req, res) => {
   const {
@@ -1058,11 +1006,6 @@ app.post("/api/analyze", async (req, res) => {
     requestedLanguage
   );
 
-  /**
-   * ----------------------------------------------------------
-   * VALIDATION
-   * ----------------------------------------------------------
-   */
   if (!isValidTab(tab)) {
     return res.status(400).json({
       success: false,
@@ -1082,11 +1025,6 @@ app.post("/api/analyze", async (req, res) => {
     });
   }
 
-  /**
-   * ----------------------------------------------------------
-   * CLIENT GEMINI
-   * ----------------------------------------------------------
-   */
   const ai = getGeminiClient();
 
   if (!ai) {
@@ -1101,12 +1039,6 @@ app.post("/api/analyze", async (req, res) => {
         "Clé API Gemini non configurée sur le serveur. Vérifie GEMINI_API_KEY dans ton fichier .env puis redémarre le serveur.",
     });
   }
-
-  /**
-   * ----------------------------------------------------------
-   * PROMPT SPÉCIFIQUE AU MODULE
-   * ----------------------------------------------------------
-   */
 
   let systemInstruction = "";
   let prompt = "";
@@ -1347,11 +1279,6 @@ Features must directly address the described problem.
 `;
   }
 
-  /**
-   * ----------------------------------------------------------
-   * APPEL GEMINI
-   * ----------------------------------------------------------
-   */
   try {
     const response =
       await ai.models.generateContent({
@@ -1361,19 +1288,12 @@ Features must directly address the described problem.
 
         config: {
           systemInstruction,
-
-          responseMimeType:
-            "application/json",
-
-          responseSchema:
-            playgroundResponseSchema,
-
-          // volontairement aucun temperature
+          responseMimeType: "application/json",
+          responseSchema: playgroundResponseSchema,
         },
       });
 
-    const text =
-      response.text?.trim();
+    const text = response.text?.trim();
 
     if (!text) {
       throw new Error(
@@ -1396,11 +1316,6 @@ Features must directly address the described problem.
       );
     }
 
-    /**
-     * --------------------------------------------------------
-     * VALIDATION MINIMALE DE LA STRUCTURE
-     * --------------------------------------------------------
-     */
     const requiredFields = [
       "title",
       "summary",
@@ -1432,14 +1347,6 @@ Features must directly address the described problem.
       );
     }
 
-    /**
-     * --------------------------------------------------------
-     * NORMALISATION DES TABLEAUX
-     *
-     * Évite un crash React si Gemini renvoie un tableau vide.
-     * On ne fabrique cependant aucune réponse métier.
-     * --------------------------------------------------------
-     */
     if (!Array.isArray(parsedData.metrics)) {
       parsedData.metrics = [];
     }
@@ -1456,11 +1363,6 @@ Features must directly address the described problem.
       parsedData.phases = [];
     }
 
-    /**
-     * --------------------------------------------------------
-     * RÉPONSE
-     * --------------------------------------------------------
-     */
     return res.json({
       success: true,
       mode: "gemini_live",
@@ -1468,13 +1370,6 @@ Features must directly address the described problem.
       data: parsedData,
     });
   } catch (error: any) {
-    /**
-     * IMPORTANT :
-     * On ne transforme PAS l'erreur Gemini en fausse réponse.
-     *
-     * C'est précisément ce qui va nous permettre de savoir
-     * pourquoi l'API échoue.
-     */
     console.error(
       "=========================================="
     );
@@ -1517,23 +1412,13 @@ Features must directly address the described problem.
       parameters
     );
 
-    /**
-     * Nous renvoyons le message d'erreur au frontend
-     * pour faciliter le diagnostic.
-     *
-     * La clé API elle-même n'est évidemment jamais renvoyée.
-     */
     return res.status(502).json({
       success: false,
-
       mode: "gemini_error",
-
       model: GEMINI_MODEL,
-
       error:
         error?.message ||
         "La requête Gemini a échoué.",
-
       details: {
         tab,
         language,
@@ -1569,11 +1454,18 @@ async function startServer() {
         "dist"
       );
 
+    // MISE EN CACHE LONGUE DURÉE POUR LES FICHIERS VITE (JS, CSS, IMAGES)
     app.use(
-      express.static(distPath)
+      express.static(distPath, {
+        maxAge: "1y",
+        immutable: true,
+        index: false,
+      })
     );
 
+    // PAS DE CACHE POUR INDEX.HTML
     app.get("*", (_req, res) => {
+      res.setHeader("Cache-Control", "no-cache");
       res.sendFile(
         path.join(
           distPath,

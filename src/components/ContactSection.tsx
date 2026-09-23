@@ -20,6 +20,7 @@ import { Language, ThemeMode } from "../types";
 import { useTranslation } from "../data/translations";
 import { getFaq } from "../data/portfolioData";
 import { getSiteSettings } from "../data/contentStore";
+import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface ContactSectionProps {
   language: Language;
@@ -172,6 +173,16 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   return (
     <div id="contact-page" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
       
+      {/* BALISE SEO POUR CONTACT */}
+      <SEO 
+        title={language === "fr" ? "Contact & Réservation | Capin Akpado" : "Contact & Booking | Capin Akpado"}
+        description={language === "fr" 
+          ? "Contactez-moi pour discuter de votre projet de développement web, mobile ou d'automatisation IA. Réservez un appel de découverte gratuit." 
+          : "Contact me to discuss your web, mobile development, or AI automation project. Book a free discovery call."}
+        language={language}
+        url={`https://capinakpado.com/${language}/contact`}
+      />
+
       {/* 1. Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-card text-blue-500 text-xs font-semibold uppercase tracking-wider">

@@ -28,6 +28,10 @@ import {
   Terminal,
   HelpCircle,
   Copy,
+  Loader2,
+  Lock,
+  LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { BlogPost, Language, ThemeMode, PageView, LogoConfig } from "../types";
 import {
@@ -35,10 +39,6 @@ import {
   saveLogoConfig,
   getProfilePhoto,
   saveProfilePhoto,
-  getStoredBlogPosts,
-  saveBlogPost,
-  deleteBlogPost,
-  resetBlogPosts,
   getSiteSettings,
   saveSiteSettings,
   getNewsletterSubscribers,
@@ -47,6 +47,8 @@ import {
   importAllData,
   SiteSettings,
 } from "../data/contentStore";
+import { TipTapEditor } from "./TipTapEditor";
+import { supabase } from "../lib/supabase";
 
 interface DashboardProps {
   language: Language;
@@ -59,6 +61,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   theme,
   onNavigate,
 }) => {
+  // --- AUTHENTICATION STATE (SUPABASE AUTH) ---
+  const [session, setSession] = useState<any>(null);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   // Navigation tabs within dashboard
   const [activeTab, setActiveTab] = useState<"blog" | "logo" | "pages" | "newsletter" | "backup">("blog");
   const [subscribers, setSubscribers] = useState(() => getNewsletterSubscribers());
@@ -71,17 +80,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // --- LOGO & MEDIA STATE ---
+  // --- LOGO & MEDIA STATE (SUPABASE STORAGE INTEGRATION) ---
   const [logoConfig, setLogoConfigState] = useState<LogoConfig>(getLogoConfig());
   const [profilePhoto, setProfilePhotoState] = useState<string>(getProfilePhoto());
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const logoFileInputRef = useRef<HTMLInputElement>(null);
   const photoFileInputRef = useRef<HTMLInputElement>(null);
+  const coverImageInputRef = useRef<HTMLInputElement>(null);
 
-  // --- BLOG STATE ---
+  // --- BLOG STATE (SUPABASE INTEGRATION) ---
   const [blogLang, setBlogLang] = useState<Language>(language);
-  const [posts, setPosts] = useState<BlogPost[]>(() => getStoredBlogPosts(language));
-  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [editingPost, setEditingPost] = useState<any | null>(null);
   const [blogPreviewMode, setBlogPreviewMode] = useState(false);
   const [aiPromptTopic, setAiPromptTopic] = useState("");
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -94,42 +106,118 @@ export const Dashboard: React.FC<DashboardProps> = ({
     new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
   );
   const [postSummary, setPostSummary] = useState("");
-  const [postContentText, setPostContentText] = useState("");
+  const [postContentHtml, setPostContentHtml] = useState("");
   const [postKeyTakeawaysText, setPostKeyTakeawaysText] = useState("");
   const [postTagsText, setPostTagsText] = useState("");
+  const [postCoverImage, setPostCoverImage] = useState("");
+
+  // Nouveaux champs pour la Programmation d'articles
+  const [postStatus, setPostStatus] = useState<"published" | "draft" | "scheduled">("published");
+  const [postScheduledAt, setPostScheduledAt] = useState("");
 
   // --- SITE PAGES & SETTINGS STATE ---
   const [settings, setSettings] = useState<SiteSettings>(getSiteSettings());
 
-  // Reload data on custom storage event
+  // 1. SUPABASE AUTH CHECK: Vérification de la session active
   useEffect(() => {
-    const handleContentUpdate = () => {
-      setLogoConfigState(getLogoConfig());
-      setProfilePhotoState(getProfilePhoto());
-      setPosts(getStoredBlogPosts(blogLang));
-      setSettings(getSiteSettings());
-    };
-    window.addEventListener("storage", handleContentUpdate);
-    window.addEventListener("capin_content_updated", handleContentUpdate);
-    return () => {
-      window.removeEventListener("storage", handleContentUpdate);
-      window.removeEventListener("capin_content_updated", handleContentUpdate);
-    };
-  }, [blogLang]);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
 
-  // Handle Logo Upload
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 2. SUPABASE FETCH: Chargement des articles
+  const fetchPostsFromSupabase = async (lang: Language) => {
+    setLoadingPosts(true);
+    try {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .eq("language", lang)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Erreur de chargement Supabase:", error.message);
+        showToast("⚠️ Impossible de charger les articles depuis Supabase.");
+      } else if (data) {
+        setPosts(data);
+      }
+    } catch (err) {
+      console.error("Erreur de connexion Supabase:", err);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session) {
+      fetchPostsFromSupabase(blogLang);
+    }
+  }, [blogLang, session]);
+
+  // Auth Handlers
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setAuthError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: authEmail,
+      password: authPassword,
+    });
+
+    if (error) {
+      setAuthError("Email ou mot de passe incorrect : " + error.message);
+    } else {
+      showToast("🔒 Authentification réussie !");
+    }
+    setIsLoggingIn(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    showToast("Déconnexion réussie.");
+  };
+
+  // Helper pour uploader un fichier sur Supabase Storage
+  const uploadFileToSupabase = async (file: File, folder: string) => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${folder}-${Date.now()}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("site-assets")
+      .upload(filePath, file);
+
+    if (uploadError) {
+      showToast("❌ Erreur d'envoi : " + uploadError.message);
+      return null;
+    }
+
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(filePath);
+    return data?.publicUrl || null;
+  };
+
+  // Handle Logo Upload via Supabase Storage
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        const updated = { ...logoConfig, url: result };
+      setIsUploadingMedia(true);
+      const publicUrl = await uploadFileToSupabase(file, "logo");
+      if (publicUrl) {
+        const updated = { ...logoConfig, url: publicUrl };
         setLogoConfigState(updated);
         saveLogoConfig(updated);
-        showToast("✅ Nouveau logo importé avec succès !");
-      };
-      reader.readAsDataURL(file);
+        showToast("✅ Nouveau logo importé et stocké sur Supabase !");
+      }
+      setIsUploadingMedia(false);
     }
   };
 
@@ -139,46 +227,66 @@ export const Dashboard: React.FC<DashboardProps> = ({
     saveLogoConfig(updated);
   };
 
-  // Handle Profile Photo Upload
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Profile Photo Upload via Supabase Storage
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setProfilePhotoState(result);
-        saveProfilePhoto(result);
-        showToast("✅ Photo de profil mise à jour !");
-      };
-      reader.readAsDataURL(file);
+      setIsUploadingMedia(true);
+      const publicUrl = await uploadFileToSupabase(file, "profile");
+      if (publicUrl) {
+        setProfilePhotoState(publicUrl);
+        saveProfilePhoto(publicUrl);
+        showToast("✅ Photo de profil mise à jour sur Supabase !");
+      }
+      setIsUploadingMedia(false);
+    }
+  };
+
+  // Handle Cover Image Upload
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploadingMedia(true);
+      const publicUrl = await uploadFileToSupabase(file, "blog");
+      if (publicUrl) {
+        setPostCoverImage(publicUrl);
+        showToast("🖼️ Image de couverture téléchargée avec succès !");
+      }
+      setIsUploadingMedia(false);
     }
   };
 
   // Initialize Blog Editor with a post
-  const startEditPost = (post: BlogPost) => {
+  const startEditPost = (post: any) => {
     setEditingPost(post);
-    setIsCreatingNew(false);
-    setPostTitle(post.title);
-    setPostCategory(post.category);
-    setPostReadTime(post.readTime);
-    setPostPublishedDate(post.publishedDate);
-    setPostSummary(post.summary);
-    setPostContentText(post.content.join("\n\n"));
-    setPostKeyTakeawaysText(post.keyTakeaways.join("\n"));
-    setPostTagsText(post.tags.join(", "));
+    setPostTitle(post.title || "");
+    setPostCategory(post.category || "Intelligence Artificielle");
+    setPostReadTime(post.read_time || "5");
+    setPostPublishedDate(post.published_date || new Date().toLocaleDateString("fr-FR"));
+    setPostSummary(post.summary || "");
+
+    const formattedContent = Array.isArray(post.content)
+      ? post.content.join("")
+      : post.content || "";
+
+    setPostContentHtml(formattedContent);
+    setPostKeyTakeawaysText(Array.isArray(post.key_takeaways) ? post.key_takeaways.join("\n") : "");
+    setPostTagsText(Array.isArray(post.tags) ? post.tags.join(", ") : "");
+    setPostCoverImage(post.cover_image || "");
+    setPostStatus(post.status || "published");
+    setPostScheduledAt(post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : "");
     setBlogPreviewMode(false);
   };
 
   const startNewPost = () => {
-    const newId = "article-" + Date.now();
     setEditingPost({
-      id: newId,
-      slug: newId,
+      id: "",
+      slug: "",
       title: "",
       summary: "",
       category: "Intelligence Artificielle",
-      readTime: "5",
-      publishedDate: new Date().toLocaleDateString(blogLang === "fr" ? "fr-FR" : "en-US", {
+      read_time: "5",
+      published_date: new Date().toLocaleDateString(blogLang === "fr" ? "fr-FR" : "en-US", {
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -188,10 +296,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         role: blogLang === "fr" ? settings.authorRoleFr : settings.authorRoleEn,
       },
       tags: ["Intelligence Artificielle", "Productivité"],
-      keyTakeaways: [],
-      content: [],
+      key_takeaways: [],
+      content: "",
     });
-    setIsCreatingNew(true);
     setPostTitle("");
     setPostCategory("Intelligence Artificielle");
     setPostReadTime("5");
@@ -203,23 +310,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
       })
     );
     setPostSummary("");
-    setPostContentText("");
+    setPostContentHtml("<p>Rédigez le contenu de votre article ici avec TipTap...</p>");
     setPostKeyTakeawaysText("");
     setPostTagsText("Intelligence Artificielle, Automatisation, Web");
+    setPostCoverImage("");
+    setPostStatus("published");
+    setPostScheduledAt("");
     setBlogPreviewMode(false);
   };
 
-  // Save Blog Post
-  const handleSaveCurrentPost = () => {
+  // 3. SUPABASE SAVE: Sauvegarder ou programmer un article
+  const handleSaveCurrentPost = async () => {
     if (!postTitle.trim()) {
       showToast("⚠️ Veuillez saisir un titre pour l'article.");
       return;
     }
 
-    const contentArray = postContentText
-      .split("\n\n")
-      .map((p) => p.trim())
-      .filter((p) => p.length > 0);
+    setIsSaving(true);
 
     const takeawaysArray = postKeyTakeawaysText
       .split("\n")
@@ -231,47 +338,75 @@ export const Dashboard: React.FC<DashboardProps> = ({
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
-    const slug = postTitle
+    const generatedSlug = postTitle
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-    const postToSave: BlogPost = {
-      id: editingPost?.id || "post-" + Date.now(),
-      slug: slug || "article-" + Date.now(),
+    const payload = {
+      ...(editingPost?.id ? { id: editingPost.id } : {}),
+      slug: editingPost?.slug || generatedSlug || `article-${Date.now()}`,
+      language: blogLang,
       title: postTitle,
       category: postCategory,
       summary: postSummary,
-      readTime: postReadTime || "5",
-      publishedDate: postPublishedDate,
+      read_time: postReadTime || "5",
+      published_date: postPublishedDate,
       author: {
-        name: settings.authorName,
+        name: settings.authorName || "Capin Akpado",
         role: blogLang === "fr" ? settings.authorRoleFr : settings.authorRoleEn,
       },
       tags: tagsArray.length > 0 ? tagsArray : ["Technologie"],
-      keyTakeaways: takeawaysArray,
-      content: contentArray.length > 0 ? contentArray : [postSummary],
+      key_takeaways: takeawaysArray,
+      content: postContentHtml,
+      cover_image: postCoverImage,
+      status: postScheduledAt ? "scheduled" : postStatus,
+      scheduled_at: postScheduledAt ? new Date(postScheduledAt).toISOString() : null,
     };
 
-    saveBlogPost(postToSave, blogLang);
-    setPosts(getStoredBlogPosts(blogLang));
-    setEditingPost(null);
-    setIsCreatingNew(false);
-    showToast(`✅ Article "${postTitle}" sauvegardé et publié avec succès !`);
+    try {
+      const { error } = await supabase.from("blog_posts").upsert(payload);
+
+      if (error) {
+        console.error("Erreur de sauvegarde Supabase:", error.message);
+        showToast("❌ Échec de la publication sur Supabase.");
+      } else {
+        const msg = postScheduledAt
+          ? `📅 Article programmé pour le ${new Date(postScheduledAt).toLocaleString("fr-FR")} !`
+          : `🎉 Article "${postTitle}" sauvegardé sur Supabase et disponible en ligne !`;
+        showToast(msg);
+        setEditingPost(null);
+        fetchPostsFromSupabase(blogLang);
+      }
+    } catch (err) {
+      console.error("Erreur réseau Supabase:", err);
+      showToast("❌ Erreur de connexion au serveur.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Delete Blog Post
-  const handleDeletePost = (id: string, title: string) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'article "${title}" ?`)) {
-      deleteBlogPost(id, blogLang);
-      setPosts(getStoredBlogPosts(blogLang));
-      if (editingPost?.id === id) {
-        setEditingPost(null);
-        setIsCreatingNew(false);
+  // 4. SUPABASE DELETE: Supprimer un article
+  const handleDeletePost = async (id: string, title: string) => {
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'article "${title}" de Supabase ?`)) {
+      try {
+        const { error } = await supabase.from("blog_posts").delete().eq("id", id);
+
+        if (error) {
+          console.error("Erreur de suppression Supabase:", error.message);
+          showToast("❌ Impossible de supprimer l'article.");
+        } else {
+          showToast("🗑️ Article supprimé de Supabase.");
+          if (editingPost?.id === id) {
+            setEditingPost(null);
+          }
+          fetchPostsFromSupabase(blogLang);
+        }
+      } catch (err) {
+        console.error("Erreur réseau :", err);
       }
-      showToast("🗑️ Article supprimé.");
     }
   };
 
@@ -289,26 +424,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
       setPostReadTime("6");
       setPostSummary(
         blogLang === "fr"
-          ? `Découvrez comment intégrer les dernières innovations en matière d'agents IA autonomes et d'architecture web pour transformer vos opérations et libérer plus de 15 heures par semaine.`
-          : `Discover how to leverage autonomous AI agents and modern web architecture to streamline business operations and reclaim over 15 hours every week.`
+          ? `Découvrez comment intégrer les dernières innovations en matière d'agents IA autonomes et d'architecture web pour transformer vos opérations.`
+          : `Discover how to leverage autonomous AI agents and modern web architecture to streamline business operations.`
       );
       setPostKeyTakeawaysText(
         blogLang === "fr"
-          ? `- L'automatisation intelligente remplace les tâches répétitives par des agents connectés à vos outils métiers.\n- Un retour sur investissement mesurable dès les 30 premiers jours de mise en production.\n- L'importance d'une architecture robuste avec typage TypeScript et sécurité native.`
-          : `- Intelligent automation replaces repetitive friction with agents integrated into your stack.\n- Measurable ROI achieved within the first 30 days of deployment.\n- The importance of robust type-safe web architecture and end-to-end security.`
+          ? `- L'automatisation intelligente remplace les tâches répétitives par des agents connectés.\n- Un retour sur investissement mesurable dès les 30 premiers jours.\n- L'importance d'une architecture robuste avec typage TypeScript.`
+          : `- Intelligent automation replaces repetitive friction with integrated agents.\n- Measurable ROI achieved within the first 30 days.\n- The importance of robust type-safe web architecture.`
       );
       setPostTagsText(
         blogLang === "fr"
           ? "Intelligence Artificielle, Automatisation, Productivité, PME, React 19"
           : "Artificial Intelligence, Automation, Productivity, Web Development"
       );
-      setPostContentText(
+      setPostContentHtml(
         blogLang === "fr"
-          ? `En 2026, l'intelligence artificielle n'est plus une simple fonctionnalité de confort : elle est le cœur battant de l'efficacité opérationnelle des entreprises modernes.\n\n### 1. Pourquoi franchir le pas dès aujourd'hui ?\n\nLes entreprises qui adoptent des flux automatisés constatent une réduction drastique des délais de traitement et une satisfaction client décuplée. Les tâches manuelles de saisie et de relance sont désormais déléguées à des agents autonomes fiables.\n\n### 2. Une architecture conçue pour la pérennité\n\nPour garantir des performances optimales, nous recommandons une stack moderne combinant React 19, TypeScript et des APIs serveurs sécurisées. Cette approche protège vos données stratégiques tout en offrant une expérience utilisateur fluide et soignée.\n\n### 3. Conclusion et passage à l'action\n\nCommencez par automatiser un premier processus clé pour valider l'impact immédiat sur votre quotidien avant d'étendre la démarche à l'ensemble de votre organisation.`
-          : `In 2026, artificial intelligence is no longer an optional add-on: it has become the driving force behind modern operational excellence.\n\n### 1. Why Take Action Today?\n\nOrganizations implementing automated workflows experience drastic turnaround time reductions and elevated customer satisfaction. Manual data ingestion and follow-ups are seamlessly delegated to reliable autonomous agents.\n\n### 2. Architecting for Resilience\n\nTo ensure peak performance, we recommend combining React 19, TypeScript, and server-side API proxying. This safeguards strategic credentials while delivering an ultra-fast, delightful user experience.\n\n### 3. Key Takeaway and Next Steps\n\nStart by automating one high-friction process to validate immediate ROI before scaling across your entire digital ecosystem.`
+          ? `<p>En 2026, l'intelligence artificielle n'est plus une simple fonctionnalité de confort : elle est le cœur battant de l'efficacité opérationnelle des entreprises modernes.</p><h2>1. Pourquoi franchir le pas dès aujourd'hui ?</h2><p>Les entreprises qui adoptent des flux automatisés constatent une réduction drastique des délais de traitement et une satisfaction client décuplée.</p><blockquote class="p-4 my-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-200 text-xs font-medium"><strong>💡 Point Clé :</strong> L'automatisation ciblée libère jusqu'à 15 heures par semaine pour les tâches à forte valeur ajoutée.</blockquote><h2>2. Une architecture conçue pour la pérennité</h2><p>Pour garantir des performances optimales, nous recommandons une stack moderne combinant React 19, TypeScript et des APIs serveurs sécurisées.</p>`
+          : `<p>In 2026, artificial intelligence is no longer an optional add-on: it has become the driving force behind modern operational excellence.</p><h2>1. Why Take Action Today?</h2><p>Organizations implementing automated workflows experience drastic turnaround time reductions.</p>`
       );
       setIsGeneratingAi(false);
-      showToast("✨ Ébauche rédigée par l'assistant IA ! Vous pouvez l'ajuster avant de publier.");
+      showToast("✨ Ébauche rédigée par l'assistant IA ! Vous pouvez l'ajuster avec TipTap.");
     }, 900);
   };
 
@@ -340,8 +475,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         if (success) {
           setLogoConfigState(getLogoConfig());
           setProfilePhotoState(getProfilePhoto());
-          setPosts(getStoredBlogPosts(blogLang));
           setSettings(getSiteSettings());
+          fetchPostsFromSupabase(blogLang);
           showToast("🎉 Données importées et appliquées avec succès !");
         } else {
           showToast("❌ Erreur lors de l'import du fichier JSON.");
@@ -351,10 +486,83 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
+  // --- ÉCRAN DE CONNEXION SÉCURISÉ (SI NON AUTHENTIFIÉ) ---
+  if (!session) {
+    return (
+      <div className="min-h-screen py-24 flex items-center justify-center px-4">
+        <form
+          onSubmit={handleLogin}
+          className="glass-panel p-8 sm:p-10 rounded-3xl border border-blue-500/30 max-w-md w-full space-y-6 shadow-2xl relative overflow-hidden"
+        >
+          <div className="text-center space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto border border-blue-500/30 shadow-lg shadow-blue-500/20">
+              <Lock className="w-7 h-7" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Espace Administration</h1>
+            <p className="text-xs text-zinc-400">
+              Veuillez vous authentifier pour accéder au Tableau de Bord et à la gestion Supabase.
+            </p>
+          </div>
+
+          {authError && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs text-center font-medium">
+              {authError}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                Email Administrateur
+              </label>
+              <input
+                type="email"
+                required
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                placeholder="votre-email@exemple.com"
+                className="w-full px-4 py-3 rounded-xl glass-input text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">
+                Mot de Passe Unique
+              </label>
+              <input
+                type="password"
+                required
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full px-4 py-3 rounded-xl glass-input text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoggingIn}
+            className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all border border-white/20 disabled:opacity-50"
+          >
+            {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            <span>{isLoggingIn ? "Vérification en cours..." : "Se Connecter à l'Administration"}</span>
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // --- DASHBOARD PRINCIPAL (UTILISATEUR AUTHENTIFIÉ) ---
   return (
     <div id="admin-dashboard-page" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       
-      {/* Toast Notification */}
+      {/* Inputs cachés pour l'upload d'images vers Supabase Storage */}
+      <input ref={logoFileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+      <input ref={photoFileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+      <input ref={coverImageInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+
+      {/* Notification Toast */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-blue-600 text-white font-bold text-sm shadow-2xl shadow-blue-600/50 flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-3 duration-200 border border-white/20">
           <CheckCircle2 className="w-5 h-5 text-white" />
@@ -362,22 +570,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      {/* Dashboard Top Header */}
+      {/* Dashboard Header */}
       <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/20 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="space-y-2 z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-blue-500 text-xs font-semibold uppercase tracking-wider font-mono">
             <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>Espace Administration & Gestion de Contenu</span>
+            <span>Espace Administration Supabase & TipTap</span>
           </div>
           <h1 className={`text-2xl sm:text-4xl font-extrabold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
             Tableau de Bord de Capin Akpado
           </h1>
           <p className={`text-xs sm:text-sm max-w-2xl ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
-            Gérez votre logo, rédigez vos articles de blog, modifiez les textes de vos pages et personnalisez votre présence en direct.
+            Publiez vos articles en direct sur votre base Supabase, rédigez avec TipTap et gérez l'ensemble de votre site.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 z-10">
+        <div className="flex items-center gap-3 z-10 flex-wrap">
           <button
             onClick={() => onNavigate("home")}
             className="px-4 py-2.5 rounded-xl glass-card hover:bg-white/10 text-xs font-semibold flex items-center gap-2 transition-all"
@@ -393,6 +601,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
           >
             <BookOpen className="w-4 h-4" />
             <span>Voir le Blog public</span>
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white text-xs font-bold flex items-center gap-2 transition-all border border-rose-500/30"
+            title="Se déconnecter de la session"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Déconnexion</span>
           </button>
         </div>
       </div>
@@ -411,7 +628,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>✍️ Rédaction Blog & Articles ({posts.length})</span>
+          <span>✍️ Rédaction Supabase & TipTap ({posts.length})</span>
         </button>
 
         <button
@@ -423,7 +640,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           }`}
         >
           <ImageIcon className="w-4 h-4" />
-          <span>🖼️ Logo & Format du Cadre</span>
+          <span>🖼️ Logo & Photo (Supabase Storage)</span>
         </button>
 
         <button
@@ -466,19 +683,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </button>
       </div>
 
-      {/* ========================================================================= */}
       {/* TAB 1: BLOG & ARTICLES MANAGEMENT */}
-      {/* ========================================================================= */}
       {activeTab === "blog" && (
         <div className="space-y-8">
           
-          {/* If NOT editing, show article list & create button */}
           {!editingPost ? (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <h2 className={`text-xl sm:text-2xl font-bold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-                    Vos Articles Publiés & Brouillons
+                    Articles en Base de Données (Supabase)
                   </h2>
                   <div className="flex items-center gap-1 p-1 rounded-lg glass-card text-xs font-mono">
                     <button
@@ -498,49 +712,66 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 <button
                   onClick={startNewPost}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 transition-all border border-white/20 self-start sm:self-auto"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 transition-all border border-white/20"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Rédiger un nouvel article</span>
                 </button>
               </div>
 
-              {/* Articles Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {posts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-blue-500/40 transition-all"
+              {/* Articles Grid or Loading */}
+              {loadingPosts ? (
+                <div className="text-center py-20 space-y-3 glass-card rounded-2xl">
+                  <Loader2 className="w-8 h-8 mx-auto text-blue-500 animate-spin" />
+                  <p className="text-xs text-zinc-400 font-mono">Connexion à Supabase...</p>
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="text-center py-16 space-y-3 glass-card rounded-2xl border border-dashed border-white/20">
+                  <BookOpen className="w-8 h-8 mx-auto text-zinc-500" />
+                  <p className="text-sm text-zinc-400">Aucun article dans Supabase pour la langue ({blogLang.toUpperCase()}).</p>
+                  <button
+                    onClick={startNewPost}
+                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold inline-flex items-center gap-2"
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-xs font-mono">
-                        <span className="px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-500 font-semibold">
-                          {post.category}
-                        </span>
-                        <span className={theme === "dark" ? "text-zinc-400" : "text-slate-500"}>
-                          {post.publishedDate}
-                        </span>
-                      </div>
-
-                      <h3 className={`text-base font-bold line-clamp-2 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-                        {post.title}
-                      </h3>
-
-                      <p className={`text-xs line-clamp-3 ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
-                        {post.summary}
-                      </p>
-
-                      <div className="flex flex-wrap gap-1 text-[10px] font-mono">
-                        {post.tags.slice(0, 3).map((tag, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded bg-white/5 text-zinc-400">
-                            #{tag}
+                    <Plus className="w-4 h-4" />
+                    <span>Créer le premier article</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {posts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="glass-card rounded-2xl p-5 flex flex-col justify-between space-y-4 hover:border-blue-500/40 transition-all"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="px-2.5 py-0.5 rounded-md bg-blue-500/10 text-blue-500 font-semibold">
+                            {post.category}
                           </span>
-                        ))}
-                      </div>
-                    </div>
+                          <span className={theme === "dark" ? "text-zinc-400" : "text-slate-500"}>
+                            {post.status === "scheduled" ? "📅 Programmé" : post.published_date}
+                          </span>
+                        </div>
 
-                    <div className="pt-3 border-t border-white/10 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
+                        <h3 className={`text-base font-bold line-clamp-2 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                          {post.title}
+                        </h3>
+
+                        <p className={`text-xs line-clamp-3 ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
+                          {post.summary}
+                        </p>
+
+                        <div className="flex flex-wrap gap-1 text-[10px] font-mono">
+                          {(Array.isArray(post.tags) ? post.tags : []).slice(0, 3).map((tag: string, i: number) => (
+                            <span key={i} className="px-2 py-0.5 rounded bg-white/5 text-zinc-400">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                         <button
                           onClick={() => startEditPost(post)}
                           className="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-semibold flex items-center gap-1 transition-all"
@@ -549,19 +780,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           <Edit3 className="w-3.5 h-3.5" />
                           <span>Éditer</span>
                         </button>
-                      </div>
 
-                      <button
-                        onClick={() => handleDeletePost(post.id, post.title)}
-                        className="p-1.5 rounded-lg hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 text-xs transition-colors"
-                        title="Supprimer l'article"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        <button
+                          onClick={() => handleDeletePost(post.id, post.title)}
+                          className="p-1.5 rounded-lg hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 text-xs transition-colors"
+                          title="Supprimer l'article de Supabase"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             /* BLOG POST EDITOR FORM */
@@ -588,10 +819,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                   <button
                     onClick={handleSaveCurrentPost}
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/30 transition-all border border-white/20"
+                    disabled={isSaving}
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/30 transition-all border border-white/20"
                   >
-                    <Save className="w-4 h-4" />
-                    <span>Enregistrer & Publier</span>
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>{isSaving ? "Publication..." : postScheduledAt ? "Programmer l'Article" : "Publier sur Supabase"}</span>
                   </button>
                 </div>
               </div>
@@ -600,10 +832,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="p-4 rounded-2xl glass-card border border-blue-500/30 space-y-3 bg-blue-500/5">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5 font-mono">
-                    <Sparkles className="w-4 h-4" /> Assistant de Rédaction IA pour Capin Akpado
+                    <Sparkles className="w-4 h-4" /> Assistant de Rédaction IA
                   </span>
                   <span className="text-[11px] text-zinc-400">
-                    Génère instantanément un plan structuré et des paragraphes optimisés
+                    Génère instantanément une ébauche compatible TipTap
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -622,6 +854,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     {isGeneratingAi ? <Bot className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                     <span>{isGeneratingAi ? "Génération..." : "Générer l'ébauche"}</span>
                   </button>
+                </div>
+              </div>
+
+              {/* BARRE PROGRAMMATION & COUVERTURE */}
+              <div className="p-4 rounded-2xl glass-card border border-blue-500/30 grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-500/5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-blue-400 font-mono flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4" /> Programmation de Publication
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={postScheduledAt}
+                    onChange={(e) => setPostScheduledAt(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl glass-input text-xs focus:outline-none"
+                  />
+                  <p className="text-[10px] text-zinc-400">Laissez vide pour publier immédiatement sur votre site.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-blue-400 font-mono flex items-center gap-1.5">
+                    <Upload className="w-4 h-4" /> Image de Couverture
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={postCoverImage}
+                      onChange={(e) => setPostCoverImage(e.target.value)}
+                      placeholder="URL ou téléchargez depuis votre PC ->"
+                      className="flex-1 px-3.5 py-2 rounded-xl glass-input text-xs focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => coverImageInputRef.current?.click()}
+                      disabled={isUploadingMedia}
+                      className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold shrink-0 transition-all flex items-center gap-1"
+                    >
+                      {isUploadingMedia ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                      <span>Image PC</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -673,7 +945,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider">
-                        Date de Publication
+                        Date de Publication Affichée
                       </label>
                       <input
                         type="text"
@@ -693,7 +965,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       rows={2}
                       value={postSummary}
                       onChange={(e) => setPostSummary(e.target.value)}
-                      placeholder="Une brève description captivante qui apparaîtra sur les cartes de présentation..."
+                      placeholder="Une brève description captivante..."
                       className="w-full px-4 py-2.5 rounded-xl glass-input text-xs leading-relaxed"
                     />
                   </div>
@@ -712,22 +984,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     />
                   </div>
 
-                  {/* Main Article Content */}
+                  {/* TIPTAP RICH TEXT EDITOR INTEGRATION */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider">
-                        Corps de l'Article (Paragraphes, Titres ###, Puces -)
-                      </label>
-                      <span className="text-[11px] text-zinc-500 font-mono">
-                        Astuce : Séparez les paragraphes par un double saut de ligne
-                      </span>
-                    </div>
-                    <textarea
-                      rows={12}
-                      value={postContentText}
-                      onChange={(e) => setPostContentText(e.target.value)}
-                      placeholder="Rédigez ici le contenu complet de votre article...&#10;&#10;### 1. Titre de section&#10;&#10;Votre paragraphe explicatif...&#10;&#10;- Élément de liste 1&#10;- Élément de liste 2"
-                      className="w-full px-4 py-3 rounded-xl glass-input text-xs leading-relaxed font-mono"
+                    <label className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider">
+                      Corps de l'Article (Éditeur Rich Text TipTap)
+                    </label>
+                    
+                    <TipTapEditor
+                      content={postContentHtml}
+                      onChange={(html) => setPostContentHtml(html)}
                     />
                   </div>
 
@@ -749,6 +1014,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               ) : (
                 /* LIVE PREVIEW OF THE ARTICLE */
                 <div className="p-6 sm:p-8 rounded-2xl glass-card border border-blue-500/30 space-y-6">
+                  {postCoverImage && (
+                    <img src={postCoverImage} alt="Couverture" className="w-full max-h-80 object-cover rounded-2xl border border-white/10" />
+                  )}
+
                   <div className="flex items-center gap-2 flex-wrap text-xs font-mono">
                     <span className="px-2.5 py-1 rounded bg-blue-500/10 text-blue-500 font-semibold">
                       {postCategory}
@@ -779,23 +1048,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                   )}
 
-                  {/* Content Paragraphs */}
-                  <div className="space-y-4 text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                    {postContentText.split("\n\n").filter(Boolean).map((par, i) => {
-                      if (par.startsWith("### ")) {
-                        return <h3 key={i} className="text-lg font-bold text-white pt-2">{par.replace("### ", "")}</h3>;
-                      }
-                      if (par.startsWith("- ")) {
-                        return (
-                          <div key={i} className="flex items-start gap-2 pl-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                            <span>{par.replace("- ", "")}</span>
-                          </div>
-                        );
-                      }
-                      return <p key={i}>{par}</p>;
-                    })}
-                  </div>
+                  {/* Rendu HTML dynamique généré par TipTap */}
+                  <div
+                    className="prose prose-invert max-w-none text-xs sm:text-sm text-zinc-300 leading-relaxed space-y-3"
+                    dangerouslySetInnerHTML={{ __html: postContentHtml }}
+                  />
                 </div>
               )}
 
@@ -809,10 +1066,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </button>
                 <button
                   onClick={handleSaveCurrentPost}
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-600/30 border border-white/20"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-600/30 border border-white/20"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>Enregistrer & Publier</span>
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>{isSaving ? "Publication..." : postScheduledAt ? "Programmer l'Article" : "Publier sur Supabase"}</span>
                 </button>
               </div>
 
@@ -821,729 +1079,142 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 2: LOGO & VISUAL IDENTITY (ADAPT LOGO TO CONTAINER FRAME) */}
-      {/* ========================================================================= */}
+      {/* TAB 2: LOGO & VISUAL IDENTITY (SUPABASE STORAGE INTEGRATION) */}
       {activeTab === "logo" && (
         <div className="space-y-8">
-          
-          {/* Logo Frame Customization Card */}
           <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-8">
             <div className="space-y-2">
               <h2 className={`text-xl sm:text-2xl font-bold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-                Ajustement du Logo dans son Cadre
+                Ajustement du Logo & Photos (Supabase Storage)
               </h2>
-              <p className={`text-xs sm:text-sm ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
-                Personnalisez le format, le cadrage, les marges intérieures et l'arrière-plan du logo pour un rendu parfait sur le menu et le pied de page.
+              <p className="text-xs text-zinc-400">
+                Les fichiers importés depuis votre PC sont automatiquement hébergés dans le bucket public Supabase Storage.
               </p>
             </div>
 
-            {/* Hidden file inputs */}
-            <input
-              ref={logoFileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-              id="dashboard-logo-upload-input"
-            />
-            <input
-              ref={photoFileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-              id="dashboard-photo-upload-input"
-            />
-
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              
-              {/* Left Column: Live Interactive Preview */}
               <div className="lg:col-span-5 flex flex-col items-center justify-center p-8 rounded-2xl glass-card border border-white/15 space-y-6 text-center">
-                <span className="text-xs font-mono text-zinc-400 font-bold uppercase tracking-wider">
-                  Aperçu du Logo dans le Cadre
-                </span>
-
-                {/* The Exact Logo Container Box */}
                 <div
                   style={{
                     padding: `${logoConfig.padding}px`,
                     borderRadius: `${logoConfig.borderRadius}px`,
                   }}
-                  className={`w-20 h-20 sm:w-24 sm:h-24 shadow-2xl transition-all flex items-center justify-center relative overflow-hidden border border-white/20 ${
-                    logoConfig.bgColor === "blue"
-                      ? "bg-blue-600 shadow-blue-600/40"
-                      : logoConfig.bgColor === "dark"
-                      ? "bg-black/90 shadow-black/80"
-                      : logoConfig.bgColor === "white"
-                      ? "bg-white shadow-slate-200"
-                      : "bg-transparent backdrop-blur-md"
+                  className={`w-28 h-28 shadow-2xl flex items-center justify-center border border-white/20 overflow-hidden ${
+                    logoConfig.bgColor === "blue" ? "bg-blue-600" : "bg-black/90"
                   }`}
                 >
                   {logoConfig.url ? (
-                    <img
-                      src={logoConfig.url}
-                      alt="Logo Capin Akpado"
-                      style={{
-                        objectFit: logoConfig.fit,
-                      }}
-                      className="w-full h-full"
-                    />
+                    <img src={logoConfig.url} alt="Logo" style={{ objectFit: logoConfig.fit }} className="w-full h-full" />
                   ) : (
-                    <div className="text-white font-bold text-sm font-mono flex flex-col items-center">
-                      <Sparkles className="w-6 h-6 mb-1 text-white" />
-                      <span>LOGO</span>
-                    </div>
+                    <span className="text-white font-bold font-mono">LOGO</span>
                   )}
                 </div>
-
-                {/* Navbar Preview Simulator */}
-                <div className="w-full p-3 rounded-xl glass-card border border-white/10 flex items-center gap-3 text-left">
-                  <div
-                    style={{
-                      padding: `${logoConfig.padding / 2}px`,
-                      borderRadius: `${logoConfig.borderRadius * 0.8}px`,
-                    }}
-                    className={`w-9 h-9 shadow-md flex items-center justify-center relative overflow-hidden border border-white/20 shrink-0 ${
-                      logoConfig.bgColor === "blue"
-                        ? "bg-blue-600"
-                        : logoConfig.bgColor === "dark"
-                        ? "bg-black/90"
-                        : logoConfig.bgColor === "white"
-                        ? "bg-white"
-                        : "bg-transparent"
-                    }`}
-                  >
-                    {logoConfig.url ? (
-                      <img
-                        src={logoConfig.url}
-                        alt="Logo"
-                        style={{ objectFit: logoConfig.fit }}
-                        className="w-full h-full"
-                      />
-                    ) : (
-                      <span className="text-[10px] font-bold text-white">CA</span>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold leading-tight">CAPIN AKPADO</div>
-                    <div className="text-[10px] text-zinc-400 font-mono">Aperçu en situation dans le menu</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => logoFileInputRef.current?.click()}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-blue-600/30"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>{logoConfig.url ? "Changer le logo" : "Importer mon logo"}</span>
-                  </button>
-
-                  {logoConfig.url && (
-                    <button
-                      onClick={() => {
-                        handleUpdateLogoSetting("url", "");
-                        showToast("Logo réinitialisé.");
-                      }}
-                      className="p-2 rounded-xl glass-card text-zinc-400 hover:text-rose-400 text-xs"
-                      title="Supprimer le logo personnalisé"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+                <button
+                  onClick={() => logoFileInputRef.current?.click()}
+                  disabled={isUploadingMedia}
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-600/30 transition-all disabled:opacity-50"
+                >
+                  {isUploadingMedia ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  <span>Changer le logo depuis votre PC</span>
+                </button>
               </div>
 
-              {/* Right Column: Controls & Sliders */}
               <div className="lg:col-span-7 space-y-6">
-                
-                {/* 1. Fit mode (Contain vs Cover) */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-blue-400" /> Mode d'Ajustement du Logo
-                  </label>
+                  <label className="text-xs font-bold font-mono text-zinc-400 uppercase">Mode d'Ajustement</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => handleUpdateLogoSetting("fit", "contain")}
-                      className={`p-3 rounded-xl border text-left space-y-1 transition-all ${
-                        logoConfig.fit === "contain"
-                          ? "bg-blue-600/20 border-blue-500 text-white"
-                          : "glass-card hover:bg-white/5 text-zinc-400"
-                      }`}
+                      className={`p-3 rounded-xl border text-xs font-bold ${logoConfig.fit === "contain" ? "bg-blue-600/20 border-blue-500 text-white" : "glass-card text-zinc-400"}`}
                     >
-                      <div className="font-bold text-xs text-white">📐 Ajuster à l'intérieur (Contain)</div>
-                      <div className="text-[11px] text-zinc-400">Le logo apparaît en entier sans être rogné</div>
+                      Ajuster (Contain)
                     </button>
-
                     <button
                       onClick={() => handleUpdateLogoSetting("fit", "cover")}
-                      className={`p-3 rounded-xl border text-left space-y-1 transition-all ${
-                        logoConfig.fit === "cover"
-                          ? "bg-blue-600/20 border-blue-500 text-white"
-                          : "glass-card hover:bg-white/5 text-zinc-400"
-                      }`}
+                      className={`p-3 rounded-xl border text-xs font-bold ${logoConfig.fit === "cover" ? "bg-blue-600/20 border-blue-500 text-white" : "glass-card text-zinc-400"}`}
                     >
-                      <div className="font-bold text-xs text-white">🖼️ Remplir le cadre (Cover)</div>
-                      <div className="text-[11px] text-zinc-400">Le logo remplit tout le cadre géométrique</div>
+                      Remplir (Cover)
                     </button>
                   </div>
                 </div>
 
-                {/* 2. Inner Padding */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider">
-                      Marge Intérieure (Padding) : {logoConfig.padding}px
-                    </label>
-                    <span className="text-[11px] text-zinc-500 font-mono">
-                      (Ajuste l'espace pour que le logo respire)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {[0, 2, 4, 6, 8, 10].map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => handleUpdateLogoSetting("padding", p)}
-                        className={`flex-1 py-2 rounded-lg text-xs font-mono font-bold transition-all ${
-                          logoConfig.padding === p
-                            ? "bg-blue-600 text-white shadow"
-                            : "glass-card hover:bg-white/10 text-zinc-400"
-                        }`}
-                      >
-                        {p}px
-                      </button>
-                    ))}
+                <div className="p-6 rounded-2xl glass-card space-y-4">
+                  <h3 className="text-xs font-bold font-mono text-zinc-400 uppercase">Photo de Profil</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full border border-white/20 overflow-hidden bg-blue-600/20 flex items-center justify-center shrink-0">
+                      {profilePhoto ? (
+                        <img src={profilePhoto} alt="Profil" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-zinc-400" />
+                      )}
+                    </div>
+                    <button
+                      onClick={() => photoFileInputRef.current?.click()}
+                      disabled={isUploadingMedia}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all disabled:opacity-50"
+                    >
+                      {isUploadingMedia ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      <span>Changer la photo PC</span>
+                    </button>
                   </div>
                 </div>
-
-                {/* 3. Background Color */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider">
-                    Couleur de Fond du Cadre
-                  </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { id: "blue", label: "Bleu Royal", bgClass: "bg-blue-600" },
-                      { id: "dark", label: "Fond Sombre", bgClass: "bg-black" },
-                      { id: "white", label: "Blanc Pur", bgClass: "bg-white text-slate-900" },
-                      { id: "transparent", label: "Transparent", bgClass: "glass-card" },
-                    ].map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => handleUpdateLogoSetting("bgColor", c.id)}
-                        className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${
-                          logoConfig.bgColor === c.id
-                            ? "border-blue-500 ring-2 ring-blue-500/40 bg-blue-500/10 text-white"
-                            : "glass-card text-zinc-400"
-                        }`}
-                      >
-                        <div className={`w-4 h-4 mx-auto rounded-full mb-1 ${c.bgClass} border border-white/20`} />
-                        <span>{c.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 4. Rounded Corners */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold font-mono text-zinc-400 uppercase tracking-wider">
-                    Forme des Coins du Cadre
-                  </label>
-                  <div className="flex items-center gap-2">
-                    {[
-                      { r: 8, label: "Carré doux (8px)" },
-                      { r: 12, label: "Moderne (12px)" },
-                      { r: 16, label: "Arrondi (16px)" },
-                      { r: 999, label: "Cercle (Rond)" },
-                    ].map((b) => (
-                      <button
-                        key={b.r}
-                        onClick={() => handleUpdateLogoSetting("borderRadius", b.r)}
-                        className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                          logoConfig.borderRadius === b.r
-                            ? "bg-blue-600 text-white font-bold"
-                            : "glass-card hover:bg-white/10 text-zinc-400"
-                        }`}
-                      >
-                        {b.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
               </div>
-
             </div>
           </div>
-
-          {/* Profile Photo Management */}
-          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/20 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden glass-card border border-blue-500/30 relative shrink-0 bg-blue-600 text-white flex items-center justify-center font-bold text-xl">
-                {profilePhoto ? (
-                  <img src={profilePhoto} alt="Capin Akpado" className="w-full h-full object-cover" />
-                ) : (
-                  <span>CA</span>
-                )}
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-bold text-base">Photo de Profil Portrait (Capin Akpado)</h3>
-                <p className="text-xs text-zinc-400">
-                  Cette photo est automatiquement affichée sur la page d'accueil et la page « À propos ».
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => photoFileInputRef.current?.click()}
-                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-blue-600/30"
-              >
-                <Upload className="w-4 h-4" />
-                <span>{profilePhoto ? "Changer la photo" : "Téléverser ma photo"}</span>
-              </button>
-
-              {profilePhoto && (
-                <button
-                  onClick={() => {
-                    saveProfilePhoto("");
-                    setProfilePhotoState("");
-                    showToast("Photo réinitialisée.");
-                  }}
-                  className="p-2.5 rounded-xl glass-card text-zinc-400 hover:text-rose-400 text-xs"
-                  title="Supprimer la photo"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 3: PAGES & TEXT CONTENT MANAGEMENT */}
-      {/* ========================================================================= */}
+      {/* TAB 3: PAGES CONTENT */}
       {activeTab === "pages" && (
-        <div className="space-y-8">
-          <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
-              <div>
-                <h2 className={`text-xl sm:text-2xl font-bold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-                  Contenus & Textes Clés du Site
-                </h2>
-                <p className={`text-xs sm:text-sm ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
-                  Modifiez vos coordonnées, titres, métriques et bios pour synchroniser l'ensemble des pages.
-                </p>
-              </div>
-
-              <button
-                onClick={handleSaveSettings}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-600/30 border border-white/20 self-start sm:self-auto"
-              >
-                <Save className="w-4 h-4" />
-                <span>Enregistrer les Textes</span>
-              </button>
+        <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-6">
+          <h2 className="text-xl font-bold">Informations Personnelles</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-mono text-zinc-400">Nom Complet</label>
+              <input
+                type="text"
+                value={settings.authorName}
+                onChange={(e) => setSettings({ ...settings, authorName: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
+              />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Identity & Contact */}
-              <div className="space-y-4 glass-card p-5 rounded-2xl">
-                <div className="font-bold text-sm text-blue-400 flex items-center gap-2 font-mono">
-                  <User className="w-4 h-4" /> Identité & Coordonnées
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-zinc-400">Nom Complet</label>
-                  <input
-                    type="text"
-                    value={settings.authorName}
-                    onChange={(e) => setSettings({ ...settings, authorName: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-zinc-400">Titre / Rôle Principal (FR)</label>
-                  <input
-                    type="text"
-                    value={settings.authorRoleFr}
-                    onChange={(e) => setSettings({ ...settings, authorRoleFr: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-zinc-400">Email de Contact</label>
-                  <input
-                    type="email"
-                    value={settings.email}
-                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-zinc-400">Localisation / Disponibilité</label>
-                  <input
-                    type="text"
-                    value={settings.location}
-                    onChange={(e) => setSettings({ ...settings, location: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Key Metrics on Home */}
-              <div className="space-y-4 glass-card p-5 rounded-2xl">
-                <div className="font-bold text-sm text-blue-400 flex items-center gap-2 font-mono">
-                  <Sparkles className="w-4 h-4" /> Métriques Clés (Page d'Accueil)
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-zinc-400">Métrique 1 (Valeur)</label>
-                    <input
-                      type="text"
-                      value={settings.metric1Val}
-                      onChange={(e) => setSettings({ ...settings, metric1Val: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl glass-input text-xs font-bold text-blue-400"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-zinc-400">Libellé Métrique 1 (FR)</label>
-                    <input
-                      type="text"
-                      value={settings.metric1LabelFr}
-                      onChange={(e) => setSettings({ ...settings, metric1LabelFr: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-zinc-400">Métrique 2 (Valeur)</label>
-                    <input
-                      type="text"
-                      value={settings.metric2Val}
-                      onChange={(e) => setSettings({ ...settings, metric2Val: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl glass-input text-xs font-bold text-emerald-400"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-zinc-400">Libellé Métrique 2 (FR)</label>
-                    <input
-                      type="text"
-                      value={settings.metric2LabelFr}
-                      onChange={(e) => setSettings({ ...settings, metric2LabelFr: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-zinc-400">Métrique 3 (Valeur)</label>
-                    <input
-                      type="text"
-                      value={settings.metric3Val}
-                      onChange={(e) => setSettings({ ...settings, metric3Val: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl glass-input text-xs font-bold text-indigo-400"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-mono text-zinc-400">Libellé Métrique 3 (FR)</label>
-                    <input
-                      type="text"
-                      value={settings.metric3LabelFr}
-                      onChange={(e) => setSettings({ ...settings, metric3LabelFr: e.target.value })}
-                      className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Bio & Pitch */}
-              <div className="md:col-span-2 space-y-4 glass-card p-5 rounded-2xl">
-                <div className="font-bold text-sm text-blue-400 flex items-center gap-2 font-mono">
-                  <FileText className="w-4 h-4" /> Présentation & Biographie (À Propos & Accueil)
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-zinc-400">Texte d'Accroche Hero (FR)</label>
-                  <textarea
-                    rows={2}
-                    value={settings.heroPitchFr}
-                    onChange={(e) => setSettings({ ...settings, heroPitchFr: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl glass-input text-xs leading-relaxed"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-zinc-400">Biographie Complète (FR)</label>
-                  <textarea
-                    rows={4}
-                    value={settings.aboutBioFr}
-                    onChange={(e) => setSettings({ ...settings, aboutBioFr: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl glass-input text-xs leading-relaxed"
-                  />
-                </div>
-              </div>
-
-            </div>
-
-            <div className="pt-4 border-t border-white/10 flex justify-end">
-              <button
-                onClick={handleSaveSettings}
-                className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30"
-              >
-                <Save className="w-4 h-4" />
-                <span>Enregistrer toutes les modifications</span>
-              </button>
-            </div>
-
+            <button onClick={handleSaveSettings} className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">
+              Enregistrer
+            </button>
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 4: NEWSLETTER & SUBSCRIBERS */}
-      {/* ========================================================================= */}
+      {/* TAB 4: NEWSLETTER */}
       {activeTab === "newsletter" && (
-        <div className="space-y-8">
-          <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <h2 className={`text-xl sm:text-2xl font-bold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-                  Abonnés au Guide IA Pro de l'Entrepreneur
-                </h2>
-                <p className={`text-xs sm:text-sm ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
-                  Liste des dirigeants et professionnels inscrits depuis la page de présentation.
-                </p>
+        <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-6">
+          <h2 className="text-xl font-bold">Abonnés ({subscribers.length})</h2>
+          <div className="space-y-2">
+            {subscribers.map((sub) => (
+              <div key={sub.id} className="flex justify-between p-3 glass-card rounded-xl text-xs">
+                <span>{sub.email}</span>
+                <span className="text-zinc-400">{sub.subscribedAt}</span>
               </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    const emails = subscribers.map((s) => s.email).join(", ");
-                    navigator.clipboard.writeText(emails);
-                    showToast("📋 Emails copiés dans le presse-papiers !");
-                  }}
-                  className="px-3.5 py-2 rounded-xl glass-card hover:bg-white/10 text-xs font-semibold flex items-center gap-1.5"
-                  title="Copier tous les emails"
-                >
-                  <Copy className="w-4 h-4 text-blue-400" />
-                  <span>Copier les emails</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    const header = "ID,Email,Nom,Role / Entreprise,Date Inscription,Source\n";
-                    const rows = subscribers
-                      .map(
-                        (s) =>
-                          `"${s.id}","${s.email}","${s.name || ""}","${s.businessType || ""}","${s.subscribedAt}","${s.source}"`
-                      )
-                      .join("\n");
-                    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.download = `abonnes_guide_ia_pro_${new Date().toISOString().split("T")[0]}.csv`;
-                    link.click();
-                    showToast("📥 Export CSV téléchargé !");
-                  }}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Exporter CSV</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Metrics cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl glass-card border border-white/10 space-y-1">
-                <span className="text-xs text-zinc-400 font-medium">Total Abonnés Inscrits</span>
-                <p className="text-2xl font-extrabold text-blue-500">{subscribers.length}</p>
-              </div>
-              <div className="p-4 rounded-2xl glass-card border border-white/10 space-y-1">
-                <span className="text-xs text-zinc-400 font-medium">Fréquence de Parution</span>
-                <p className="text-2xl font-extrabold text-indigo-400">1x / Mardi</p>
-              </div>
-              <div className="p-4 rounded-2xl glass-card border border-white/10 space-y-1">
-                <span className="text-xs text-zinc-400 font-medium">Taux d'Engagement Moyen</span>
-                <p className="text-2xl font-extrabold text-emerald-400">62.4%</p>
-              </div>
-            </div>
-
-            {/* Subscribers Table */}
-            <div className="overflow-x-auto rounded-2xl border border-white/10">
-              <table className="w-full text-left text-xs sm:text-sm">
-                <thead className={theme === "dark" ? "bg-zinc-900/90 text-zinc-400 font-mono text-[11px]" : "bg-slate-100 text-slate-600 font-mono text-[11px]"}>
-                  <tr>
-                    <th className="p-3.5">Email Professionnel</th>
-                    <th className="p-3.5">Nom / Contact</th>
-                    <th className="p-3.5">Activité / Poste</th>
-                    <th className="p-3.5">Date Inscription</th>
-                    <th className="p-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {subscribers.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-zinc-400">
-                        Aucun abonné pour le moment.
-                      </td>
-                    </tr>
-                  ) : (
-                    subscribers.map((sub) => (
-                      <tr
-                        key={sub.id}
-                        className={theme === "dark" ? "hover:bg-white/[0.02]" : "hover:bg-slate-50"}
-                      >
-                        <td className="p-3.5 font-semibold text-blue-400">
-                          {sub.email}
-                        </td>
-                        <td className="p-3.5">
-                          {sub.name || <span className="text-zinc-500 italic">Non renseigné</span>}
-                        </td>
-                        <td className="p-3.5">
-                          {sub.businessType || <span className="text-zinc-500 italic">Entrepreneur</span>}
-                        </td>
-                        <td className="p-3.5 font-mono text-xs text-zinc-400">
-                          {new Date(sub.subscribedAt).toLocaleDateString("fr-FR", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </td>
-                        <td className="p-3.5 text-right">
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Supprimer l'abonné ${sub.email} ?`)) {
-                                deleteNewsletterSubscriber(sub.id);
-                                setSubscribers(getNewsletterSubscribers());
-                                showToast("🗑️ Abonné supprimé.");
-                              }
-                            }}
-                            className="p-1.5 rounded-lg hover:bg-rose-500/20 text-rose-400 transition-colors"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Quick link to see public page */}
-            <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-between gap-4">
-              <div className="space-y-0.5">
-                <h4 className="text-xs sm:text-sm font-bold text-blue-400">Voir la page publique du Guide IA Pro</h4>
-                <p className="text-xs text-zinc-400">Présentation, formulaire d'inscription et ressources offertes.</p>
-              </div>
-              <button
-                onClick={() => onNavigate("guide-ia-pro")}
-                className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shrink-0"
-              >
-                <span>Accéder à la page</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
+            ))}
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 4: BACKUP & DATA MANAGEMENT */}
-      {/* ========================================================================= */}
+      {/* TAB 5: BACKUP */}
       {activeTab === "backup" && (
-        <div className="space-y-8">
-          <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-8">
-            <div className="space-y-2">
-              <h2 className={`text-xl sm:text-2xl font-bold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-                Sauvegarde & Restauration Intégrale
-              </h2>
-              <p className={`text-xs sm:text-sm ${theme === "dark" ? "text-zinc-300" : "text-slate-600"}`}>
-                Exportez tous vos articles, réglages de logo, photo et textes sous forme de fichier JSON sécurisé.
-              </p>
-            </div>
+        <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-6">
+          <h2 className="text-xl font-bold">Sauvegarde des Données</h2>
+          <div className="flex gap-4 flex-wrap">
+            <button onClick={handleExport} className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              <span>Télécharger la Sauvegarde JSON</span>
+            </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Export Card */}
-              <div className="p-6 rounded-2xl glass-card border border-white/10 space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
-                  <Download className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base">Exporter mes données (JSON)</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Téléchargez un fichier de sauvegarde contenant l'ensemble de vos articles de blog rédigés, configurations de logo et textes.
-                </p>
-                <button
-                  onClick={handleExport}
-                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-blue-600/20"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Télécharger la Sauvegarde JSON</span>
-                </button>
-              </div>
-
-              {/* Import Card */}
-              <div className="p-6 rounded-2xl glass-card border border-white/10 space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-base">Restaurer une sauvegarde (JSON)</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Importez un fichier JSON précédemment sauvegardé pour restaurer immédiatement vos articles et styles.
-                </p>
-                <label className="w-full py-2.5 rounded-xl glass-card hover:bg-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer border border-white/20">
-                  <Upload className="w-4 h-4 text-emerald-400" />
-                  <span>Choisir un fichier JSON</span>
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportFile}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Danger Zone: Reset to factory defaults */}
-            <div className="pt-6 border-t border-rose-500/20 p-5 rounded-2xl bg-rose-500/5 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <h4 className="font-bold text-sm text-rose-400">Réinitialiser aux valeurs d'origine</h4>
-                <p className="text-xs text-zinc-400">
-                  Efface les personnalisations locales et recharge les articles et textes initiaux.
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  if (window.confirm("Êtes-vous sûr de vouloir réinitialiser les articles et textes aux valeurs d'origine ?")) {
-                    resetBlogPosts();
-                    localStorage.removeItem("capin_site_settings");
-                    setPosts(getStoredBlogPosts(blogLang));
-                    setSettings(getSiteSettings());
-                    showToast("🔄 Valeurs d'origine restaurées.");
-                  }
-                }}
-                className="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all self-start sm:self-auto"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Réinitialiser</span>
-              </button>
-            </div>
-
+            <label className="px-5 py-2.5 rounded-xl glass-card hover:bg-white/10 text-xs font-bold cursor-pointer flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              <span>Importer un Fichier JSON</span>
+              <input type="file" accept=".json" onChange={handleImportFile} className="hidden" />
+            </label>
           </div>
         </div>
       )}

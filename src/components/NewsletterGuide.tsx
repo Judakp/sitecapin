@@ -28,6 +28,7 @@ import {
 import { Language, ThemeMode, PageView } from "../types";
 import { useTranslation } from "../data/translations";
 import { saveNewsletterSubscriber, getSiteSettings } from "../data/contentStore";
+import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface NewsletterGuideProps {
   language: Language;
@@ -96,6 +97,17 @@ export const NewsletterGuide: React.FC<NewsletterGuideProps> = ({
         isDark ? "bg-black text-zinc-100" : "bg-slate-50 text-slate-900"
       }`}
     >
+      
+      {/* BALISE SEO POUR LE GUIDE IA PRO */}
+      <SEO 
+        title={language === "fr" ? "Le Guide IA Pro | Capin Akpado" : "The AI Pro Guide | Capin Akpado"}
+        description={language === "fr" 
+          ? "Abonnez-vous au Guide IA Pro pour recevoir des stratégies concrètes sur l'intelligence artificielle, l'automatisation et le développement web pour votre entreprise." 
+          : "Subscribe to the AI Pro Guide to receive actionable strategies on artificial intelligence, automation, and web development for your business."}
+        language={language}
+        url={`https://capinakpado.com/${language}/guide-ia-pro`}
+      />
+
       <div className="max-w-6xl mx-auto space-y-16 sm:space-y-24">
         
         {/* ================= HERO SECTION ================= */}
