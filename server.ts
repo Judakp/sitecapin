@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
@@ -1433,6 +1434,234 @@ Features must directly address the described problem.
  * ============================================================
  */
 
+
+/**
+ * ============================================================
+ * VALIDATION DES ROUTES SPA EN PRODUCTION
+ * ============================================================
+ *
+ * Express doit distinguer une vraie route React d'une URL inconnue.
+ * Les routes dynamiques de services sont connues localement.
+ * Les articles sont vérifiés dans Supabase afin qu'un slug inexistant
+ * reçoive réellement un HTTP 404.
+ */
+const PUBLIC_SERVICE_SLUGS = new Set([
+  "guide-ia-pro",
+  "web-dev",
+  "ai-integration",
+  "formation-agents-ia",
+  "automation",
+  "mobile-dev",
+]);
+
+const PUBLIC_EXACT_ROUTES = new Set([
+  "/",
+  "/fr",
+  "/en",
+  "/fr/accueil",
+  "/fr/a-propos",
+  "/fr/services",
+  "/fr/portfolio",
+  "/fr/audit-ia",
+  "/fr/blog",
+  "/fr/guide-ia-pro",
+  "/fr/contact",
+  "/fr/conditions-utilisation",
+  "/fr/confidentialite",
+  "/en/home",
+  "/en/about",
+  "/en/services",
+  "/en/portfolio",
+  "/en/ai-audit",
+  "/en/blog",
+  "/en/ai-pro-guide",
+  "/en/contact",
+  "/en/terms-of-use",
+  "/en/privacy-policy",
+  "/adminboss",
+]);
+
+function normalizeRequestPath(requestPath: string): string {
+  const pathname = requestPath.split("?")[0].split("#")[0];
+  const decoded = decodeURIComponent(pathname || "/");
+  const withoutTrailingSlash =
+    decoded.length > 1 ? decoded.replace(/\/+$/, "") : decoded;
+  return withoutTrailingSlash.toLowerCase();
+}
+
+function isKnownStaticRoute(pathname: string): boolean {
+  if (PUBLIC_EXACT_ROUTES.has(pathname)) return true;
+
+  const parts = pathname.split("/").filter(Boolean);
+
+  // /fr/services/:slug et /en/services/:slug
+  if (
+    parts.length === 3 &&
+    (parts[0] === "fr" || parts[0] === "en") &&
+    parts[1] === "services"
+  ) {
+    return PUBLIC_SERVICE_SLUGS.has(parts[2]);
+  }
+
+  return false;
+}
+
+interface PublicArticleMeta {
+  id: string;
+  slug: string;
+  language: "fr" | "en";
+  title: string;
+  summary: string;
+  cover_image?: string | null;
+  published_at?: string | null;
+  published_date?: string | null;
+  scheduled_at?: string | null;
+  status?: string | null;
+}
+
+function isPublicArticle(row: Pick<PublicArticleMeta, "status" | "scheduled_at"> & { scheduled_at?: string | null }): boolean {
+  if (row.status === "draft") return false;
+  if (row.status === "scheduled") {
+    return Boolean(row.scheduled_at && new Date(row.scheduled_at).getTime() <= Date.now());
+  }
+  return true;
+}
+
+async function getPublicArticleMeta(pathname: string): Promise<PublicArticleMeta | null> {
+  const parts = pathname.split("/").filter(Boolean);
+
+  if (
+    parts.length !== 3 ||
+    (parts[0] !== "fr" && parts[0] !== "en") ||
+    parts[1] !== "blog"
+  ) {
+    return null;
+  }
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
+  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
+
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+
+  const language = parts[0];
+  const slug = parts[2];
+
+  try {
+    const endpoint =
+      `${supabaseUrl.replace(/\/+$/, "")}/rest/v1/blog_posts` +
+      `?select=id,slug,language,title,summary,cover_image,published_at,published_date,status,scheduled_at` +
+      `&slug=eq.${encodeURIComponent(slug)}` +
+      `&language=eq.${language}&limit=1`;
+
+    const response = await fetch(endpoint, {
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`[blog] Vérification article impossible (${response.status}) pour ${pathname}`);
+      return null;
+    }
+
+    const rows = await response.json();
+    const article = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    if (!article || !isPublicArticle(article)) return null;
+    return article as PublicArticleMeta;
+  } catch (error) {
+    console.warn("[blog] Vérification article échouée :", error);
+    return null;
+  }
+}
+
+async function articleExists(pathname: string): Promise<boolean | null> {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length !== 3 || (parts[0] !== "fr" && parts[0] !== "en") || parts[1] !== "blog") {
+    return null;
+  }
+
+  const article = await getPublicArticleMeta(pathname);
+  return article ? true : false;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function absoluteUrl(value: string | null | undefined): string {
+  if (!value) return "https://capinakpado.com/og-default-image.png";
+  try {
+    return new URL(value, "https://capinakpado.com/").toString();
+  } catch {
+    return "https://capinakpado.com/og-default-image.png";
+  }
+}
+
+function injectArticleMeta(html: string, article: PublicArticleMeta, pathname: string): string {
+  const canonical = `https://capinakpado.com${pathname}`;
+  const title = escapeHtml(article.title);
+  const description = escapeHtml(article.summary || article.title);
+  const image = escapeHtml(absoluteUrl(article.cover_image));
+  const canonicalEscaped = escapeHtml(canonical);
+  const locale = article.language === "fr" ? "fr_FR" : "en_US";
+  const articleTime = article.published_at ? `<meta property="article:published_time" content="${escapeHtml(article.published_at)}" />` : "";
+
+  const tags = `
+    <meta name="description" content="${description}" />
+    <meta property="og:title" content="${title} | Capin Akpado" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="${canonicalEscaped}" />
+    <meta property="og:image" content="${image}" />
+    <meta property="og:image:alt" content="${title}" />
+    <meta property="og:locale" content="${locale}" />
+    <meta property="og:site_name" content="Capin Akpado" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title} | Capin Akpado" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${image}" />
+    <link rel="canonical" href="${canonicalEscaped}" />
+    ${articleTime}
+  `;
+
+  return html
+    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${title} | Capin Akpado</title>`)
+    .replace(/<meta name="description"[^>]*>/i, "")
+    .replace(/<meta property="og:[^"]+"[^>]*>/gi, "")
+    .replace(/<meta name="twitter:[^"]+"[^>]*>/gi, "")
+    .replace(/<link rel="canonical"[^>]*>/i, "")
+    .replace(/<\/head>/i, `${tags}\n  </head>`);
+}
+
+async function isKnownSpaRoute(pathname: string): Promise<boolean> {
+  if (isKnownStaticRoute(pathname)) return true;
+
+  const articleStatus = await articleExists(pathname);
+
+  // null = impossible de vérifier ; on laisse React gérer la route.
+  if (articleStatus === true) return true;
+  if (articleStatus === false) return false;
+
+  // Une route /blog/:slug dont Supabase n'est pas disponible doit
+  // continuer à charger React pour conserver le comportement actuel.
+  const parts = pathname.split("/").filter(Boolean);
+  if (
+    parts.length === 3 &&
+    (parts[0] === "fr" || parts[0] === "en") &&
+    parts[1] === "blog"
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 async function startServer() {
   if (
     process.env.NODE_ENV !== "production"
@@ -1463,15 +1692,34 @@ async function startServer() {
       })
     );
 
-    // PAS DE CACHE POUR INDEX.HTML
-    app.get("*", (_req, res) => {
+    // PAS DE CACHE POUR INDEX.HTML.
+    //
+    // Pour une URL React inconnue, on sert le shell React avec le statut
+    // HTTP 404. Le composant NotFound.tsx pourra alors afficher la page
+    // 404 sans rediriger l'utilisateur vers l'accueil.
+    app.get("*", async (req, res) => {
+      const pathname = normalizeRequestPath(req.path);
+      const knownRoute = await isKnownSpaRoute(pathname);
+
       res.setHeader("Cache-Control", "no-cache");
-      res.sendFile(
-        path.join(
-          distPath,
-          "index.html"
-        )
-      );
+
+      if (!knownRoute) {
+        res.status(404);
+      }
+
+      const articleMeta = await getPublicArticleMeta(pathname);
+      if (articleMeta) {
+        try {
+          const indexHtml = await fs.promises.readFile(path.join(distPath, "index.html"), "utf8");
+          return res
+            .type("html")
+            .send(injectArticleMeta(indexHtml, articleMeta, pathname));
+        } catch (error) {
+          console.error("[blog] Impossible de préparer les métadonnées sociales :", error);
+        }
+      }
+
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 

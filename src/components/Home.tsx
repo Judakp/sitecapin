@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
   ArrowRight,
@@ -26,12 +27,12 @@ import { useTranslation } from "../data/translations";
 import {
   getStoredServices,
   getStoredCaseStudies,
-  getStoredBlogPosts,
   getSiteSettings,
   getProfilePhoto,
 } from "../data/contentStore";
 import photoCapinWebp from "../assets/images/photo-capin.webp";
-import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
+import { SEO } from "./SEO";
+import { fetchPublicBlogPosts } from "../data/blogUtils";
 
 interface HomeProps {
   language: Language;
@@ -41,23 +42,33 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
   const t = useTranslation(language);
+  const navigate = useNavigate();
   const [siteSettings, setSiteSettings] = useState(() => getSiteSettings());
   const [services, setServices] = useState(() => getStoredServices(language));
   const [caseStudies, setCaseStudies] = useState(() => getStoredCaseStudies(language));
-  const [blogPosts, setBlogPosts] = useState(() => getStoredBlogPosts(language));
+  const [blogPosts, setBlogPosts] = useState<import("../types").BlogPost[]>([]);
+  const [blogLoading, setBlogLoading] = useState(true);
   const [profilePhoto, setProfilePhoto] = useState<string>(() => getProfilePhoto());
 
   const featuredStudy = caseStudies[0];
 
-  // Image source effective (soit issue du store local, soit du fichier par défaut importé)
   const effectiveProfilePhoto = profilePhoto || photoCapinWebp;
 
-  // Re-sync with store if changed
   useEffect(() => {
     setSiteSettings(getSiteSettings());
     setServices(getStoredServices(language));
     setCaseStudies(getStoredCaseStudies(language));
-    setBlogPosts(getStoredBlogPosts(language));
+    void (async () => {
+      setBlogLoading(true);
+      try {
+        setBlogPosts(await fetchPublicBlogPosts(language, 2));
+      } catch (error) {
+        console.error("Impossible de charger les derniers articles :", error);
+        setBlogPosts([]);
+      } finally {
+        setBlogLoading(false);
+      }
+    })();
     setProfilePhoto(getProfilePhoto());
   }, [language]);
 
@@ -66,7 +77,17 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
       setSiteSettings(getSiteSettings());
       setServices(getStoredServices(language));
       setCaseStudies(getStoredCaseStudies(language));
-      setBlogPosts(getStoredBlogPosts(language));
+      void (async () => {
+      setBlogLoading(true);
+      try {
+        setBlogPosts(await fetchPublicBlogPosts(language, 2));
+      } catch (error) {
+        console.error("Impossible de charger les derniers articles :", error);
+        setBlogPosts([]);
+      } finally {
+        setBlogLoading(false);
+      }
+    })();
       setProfilePhoto(getProfilePhoto());
     };
     window.addEventListener("storage", handleStorageChange);
@@ -80,7 +101,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
   return (
     <div id="home-page" className="space-y-24 pb-20">
       
-      {/* BALISE SEO POUR L'ACCUEIL */}
       <SEO 
         title={language === "fr" ? "Accueil | Capin Akpado - Architecte IA & Web" : "Home | Capin Akpado - AI & Web Architect"}
         description={language === "fr" 
@@ -90,19 +110,17 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
         url={`https://capinakpado.com/${language}/${language === "fr" ? "accueil" : "home"}`}
       />
 
-      {/* 1. Hero Section */}
-      <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
-        {/* Background ambient lighting */}
+      {/* 1. Hero Section - MODIFICATION ICI : pb-16 et sm:pb-24 ont été supprimés */}
+      <section className="relative pt-8 sm:pt-12 overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[380px] bg-blue-600/15 rounded-full blur-[150px] pointer-events-none" />
         <div className="absolute top-1/3 left-1/4 w-[350px] h-[280px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             
             {/* Left Column: Pitch & CTAs */}
             <div className="lg:col-span-7 space-y-7 text-left">
               
-              {/* Profile Avatar Badge */}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   onClick={() => onNavigate("about")}
@@ -127,7 +145,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                   </div>
                 </button>
 
-                {/* Pill status */}
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-card text-xs font-medium shadow-sm">
                   <span className="flex h-2 w-2 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -143,7 +160,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                 </div>
               </div>
 
-              {/* Headline */}
               <div className="space-y-4">
                 <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12] ${
                   theme === "dark" ? "text-white" : "text-slate-900"
@@ -164,7 +180,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                 </p>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
                 <button
                   id="hero-cta-test-ai"
@@ -196,7 +211,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                 </button>
               </div>
 
-              {/* Key Metrics */}
               <div className="pt-5 border-t border-white/10 grid grid-cols-3 gap-3 sm:gap-6">
                 <div className="glass-card p-3 sm:p-4 rounded-xl">
                   <div className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
@@ -231,7 +245,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
             <div className="lg:col-span-5">
               <div className="relative rounded-2xl glass-card border border-white/15 shadow-2xl p-5 sm:p-6 backdrop-blur-2xl">
                 
-                {/* Window Header */}
                 <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-rose-500/80" />
@@ -247,10 +260,8 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                   </div>
                 </div>
 
-                {/* Simulated AI Flow */}
                 <div className="space-y-3.5 font-mono text-xs">
                   
-                  {/* User Request */}
                   <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="flex items-center gap-1.5 font-semibold font-mono text-blue-400">
@@ -265,7 +276,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                     </p>
                   </div>
 
-                  {/* Processing Status */}
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs">
                     <Bot className="w-4 h-4 animate-spin" style={{ animationDuration: "4s" }} />
                     <span className="font-sans font-medium">{t.hero.aiProcessing}</span>
@@ -274,7 +284,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                     </span>
                   </div>
 
-                  {/* Diagnostic Card */}
                   <div className={`p-4 rounded-xl border space-y-2.5 ${
                     theme === "dark" ? "bg-black/40 border-white/10" : "bg-white/80 border-slate-200"
                   }`}>
@@ -301,14 +310,13 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                     <button
                       id="hero-try-sim-btn"
                       onClick={() => onNavigate("test-ai")}
-                      className="w-full mt-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-sans font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-blue-600/30 border border-white/20"
+                      className="w-full mt-2 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-sans font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-blue-600/30 border border-white/20"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>{t.hero.tryInTestAi}</span>
                     </button>
                   </div>
 
-                  {/* Reassuring Badges */}
                   <div className={`flex items-center justify-between text-[11px] pt-1 font-sans ${
                     theme === "dark" ? "text-zinc-400" : "text-slate-500"
                   }`}>
@@ -328,16 +336,14 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
         </div>
       </section>
 
-      {/* 2. Spotlight Section: Rencontrez Capin Akpado (Photo & Présentation) */}
+      {/* 2. Spotlight Section: Rencontrez Capin Akpado */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="glass-panel rounded-3xl p-6 sm:p-10 border border-blue-500/20 shadow-2xl relative overflow-hidden">
           
-          {/* Ambient Glow */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* Left: Photo Frame */}
             <div className="lg:col-span-4 flex flex-col items-center text-center space-y-4">
               <div className="relative w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden glass-card border-2 border-blue-500/30 p-1.5 shadow-2xl group">
                 <img
@@ -346,7 +352,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                   className="w-full h-full object-cover rounded-2xl transition-transform group-hover:scale-105 duration-300"
                 />
 
-                {/* Active Indicator */}
                 <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-full bg-emerald-500/90 text-white text-[10px] font-mono font-bold flex items-center gap-1 shadow-md backdrop-blur-sm">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   <span>Actif</span>
@@ -354,7 +359,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
               </div>
             </div>
 
-            {/* Right: Bio & Profile Pitch */}
             <div className="lg:col-span-8 space-y-5 text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-blue-500 text-xs font-semibold uppercase tracking-wider font-mono">
                 <User className="w-3.5 h-3.5" />
@@ -378,7 +382,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                   : "Specializing in high-performance website development, custom mobile applications, and AI solutions, I help startups and established businesses turn their ideas into elite digital products. From UI/UX design to deploying autonomous AI agents, I build robust tools that eliminate repetitive tasks and maximize your profitability."}
               </p>
 
-              {/* Badges */}
               <div className="flex flex-wrap gap-2 pt-1">
                 <span className="px-3 py-1 rounded-lg text-xs font-mono font-medium glass-card text-blue-400 border border-blue-500/20">
                   ⚡ Website & App
@@ -394,7 +397,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
                 </span>
               </div>
 
-              {/* Link to Full About Page */}
               <div className="pt-3 flex flex-wrap items-center gap-4">
                 <button
                   onClick={() => onNavigate("about")}
@@ -481,7 +483,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Featured Case Study Card */}
           <div className="lg:col-span-7 glass-card rounded-2xl p-6 sm:p-8 space-y-6 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -530,7 +531,6 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
             </div>
           </div>
 
-          {/* Test AI Simulator Promo Card */}
           <div className="lg:col-span-5 glass-panel rounded-2xl p-6 sm:p-8 space-y-6 flex flex-col justify-between border-blue-500/30">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-500 text-xs font-mono font-semibold">
@@ -596,13 +596,34 @@ export const Home: React.FC<HomeProps> = ({ language, theme, onNavigate }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {blogPosts.slice(0, 2).map((post) => (
+          {blogLoading ? (
+            <div className="md:col-span-2 glass-card rounded-2xl p-8 text-center text-sm text-zinc-400">
+              {language === "fr" ? "Chargement des dernières publications…" : "Loading the latest publications…"}
+            </div>
+          ) : blogPosts.length === 0 ? (
+            <div className="md:col-span-2 glass-card rounded-2xl p-8 text-center text-sm text-zinc-400">
+              {language === "fr" ? "Aucun article publié pour le moment." : "No published article yet."}
+            </div>
+          ) : blogPosts.slice(0, 2).map((post) => (
             <div
               key={post.id}
-              onClick={() => onNavigate("blog")}
+              onClick={() => navigate(`/${language}/blog/${post.slug || post.id}`)}
               className="glass-card-hover cursor-pointer rounded-2xl p-6 sm:p-7 flex flex-col justify-between space-y-4"
             >
               <div className="space-y-3">
+                {post.coverImage && (
+                  <div className="w-full h-40 rounded-xl overflow-hidden border border-white/10">
+                    <img
+                      src={post.coverImage}
+                      alt={post.title}
+                      width={1280}
+                      height={720}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
                   <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-semibold">
                     {post.category}

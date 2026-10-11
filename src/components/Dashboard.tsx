@@ -48,6 +48,7 @@ import {
   SiteSettings,
 } from "../data/contentStore";
 import { TipTapEditor } from "./TipTapEditor";
+import { BilingualBlogEditor } from "./BilingualBlogEditor";
 import { supabase } from "../lib/supabase";
 
 interface DashboardProps {
@@ -55,6 +56,84 @@ interface DashboardProps {
   theme: ThemeMode;
   onNavigate: (page: PageView) => void;
 }
+
+
+const pageSettingGroups: {
+  title: string;
+  description: string;
+  fields: Array<{
+    key: keyof SiteSettings;
+    label: string;
+    long?: boolean;
+  }>;
+}[] = [
+  {
+    title: "Identité & Contact",
+    description: "Informations générales utilisées dans plusieurs sections du site.",
+    fields: [
+      { key: "authorName", label: "Nom complet" },
+      { key: "authorRoleFr", label: "Fonction — Français" },
+      { key: "authorRoleEn", label: "Role — English" },
+      { key: "email", label: "E-mail" },
+      { key: "phone", label: "Téléphone" },
+      { key: "location", label: "Localisation" },
+      { key: "linkedinUrl", label: "LinkedIn" },
+      { key: "githubUrl", label: "GitHub" },
+      { key: "whatsappUrl", label: "WhatsApp" },
+      { key: "bookingUrl", label: "Lien de prise de rendez-vous" },
+    ],
+  },
+  {
+    title: "Page d'accueil",
+    description: "Modifiez directement les textes visibles sur les versions FR et EN de l'accueil.",
+    fields: [
+      { key: "homeHeroTitleFr", label: "Hero — titre FR" },
+      { key: "homeHeroTitleEn", label: "Hero — title EN" },
+      { key: "homeHeroSubtitleFr", label: "Hero — sous-titre FR", long: true },
+      { key: "homeHeroSubtitleEn", label: "Hero — subtitle EN", long: true },
+      { key: "homeCtaPrimaryFr", label: "CTA principal FR" },
+      { key: "homeCtaPrimaryEn", label: "Primary CTA EN" },
+      { key: "homeCtaSecondaryFr", label: "CTA secondaire FR" },
+      { key: "homeCtaSecondaryEn", label: "Secondary CTA EN" },
+      { key: "metric1Val", label: "Indicateur 1 — valeur" },
+      { key: "metric1LabelFr", label: "Indicateur 1 — FR" },
+      { key: "metric1LabelEn", label: "Metric 1 — EN" },
+      { key: "metric2Val", label: "Indicateur 2 — valeur" },
+      { key: "metric2LabelFr", label: "Indicateur 2 — FR" },
+      { key: "metric2LabelEn", label: "Metric 2 — EN" },
+      { key: "metric3Val", label: "Indicateur 3 — valeur" },
+      { key: "metric3LabelFr", label: "Indicateur 3 — FR" },
+      { key: "metric3LabelEn", label: "Metric 3 — EN" },
+    ],
+  },
+  {
+    title: "Page À propos",
+    description: "Biographie, positionnement et indicateurs de présentation.",
+    fields: [
+      { key: "aboutRoleFr", label: "Fonction — FR" },
+      { key: "aboutRoleEn", label: "Role — EN" },
+      { key: "aboutShortBioFr", label: "Bio courte — FR", long: true },
+      { key: "aboutShortBioEn", label: "Short bio — EN", long: true },
+      { key: "aboutBioFr", label: "Biographie — FR", long: true },
+      { key: "aboutBioEn", label: "Biography — EN", long: true },
+      { key: "aboutPhilosophyFr", label: "Philosophie — FR", long: true },
+      { key: "aboutPhilosophyEn", label: "Philosophy — EN", long: true },
+      { key: "aboutExperienceYears", label: "Expérience" },
+      { key: "aboutCompletedProjects", label: "Projets réalisés" },
+      { key: "aboutSatisfactionRate", label: "Taux de satisfaction" },
+    ],
+  },
+  {
+    title: "Page Contact",
+    description: "Textes d'accroche et délai de réponse.",
+    fields: [
+      { key: "contactPitchFr", label: "Accroche — FR", long: true },
+      { key: "contactPitchEn", label: "Pitch — EN", long: true },
+      { key: "responseTimeFr", label: "Délai de réponse — FR" },
+      { key: "responseTimeEn", label: "Response time — EN" },
+    ],
+  },
+];
 
 export const Dashboard: React.FC<DashboardProps> = ({
   language,
@@ -94,6 +173,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [loadingPosts, setLoadingPosts] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [showBilingualEditor, setShowBilingualEditor] = useState(false);
   const [blogPreviewMode, setBlogPreviewMode] = useState(false);
   const [aiPromptTopic, setAiPromptTopic] = useState("");
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
@@ -258,6 +338,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Initialize Blog Editor with a post
   const startEditPost = (post: any) => {
+    setShowBilingualEditor(false);
     setEditingPost(post);
     setPostTitle(post.title || "");
     setPostCategory(post.category || "Intelligence Artificielle");
@@ -279,6 +360,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const startNewPost = () => {
+    setShowBilingualEditor(false);
     setEditingPost({
       id: "",
       slug: "",
@@ -364,6 +446,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       cover_image: postCoverImage,
       status: postScheduledAt ? "scheduled" : postStatus,
       scheduled_at: postScheduledAt ? new Date(postScheduledAt).toISOString() : null,
+      published_at: postScheduledAt
+        ? new Date(postScheduledAt).toISOString()
+        : postStatus === "published"
+          ? new Date().toISOString()
+          : null,
     };
 
     try {
@@ -447,10 +534,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }, 900);
   };
 
-  // Save Settings
-  const handleSaveSettings = () => {
+  // Save Settings — local cache + Supabase CMS
+  const handleSaveSettings = async () => {
     saveSiteSettings(settings);
-    showToast("✅ Informations et textes des pages enregistrés !");
+
+    const { error } = await supabase
+      .from("site_settings")
+      .upsert(
+        {
+          id: "global",
+          settings,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+
+    if (error) {
+      console.error("Erreur de sauvegarde des réglages CMS :", error);
+      showToast(
+        "⚠️ Les réglages ont été conservés sur cet appareil, mais la synchronisation Supabase a échoué."
+      );
+      return;
+    }
+
+    showToast("✅ Contenus des pages enregistrés et synchronisés.");
   };
 
   // Export / Import
@@ -620,6 +727,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           onClick={() => {
             setActiveTab("blog");
             setEditingPost(null);
+            setShowBilingualEditor(false);
           }}
           className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all ${
             activeTab === "blog"
@@ -687,7 +795,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {activeTab === "blog" && (
         <div className="space-y-8">
           
-          {!editingPost ? (
+          {showBilingualEditor ? (
+            <BilingualBlogEditor
+              theme={theme}
+              settings={settings}
+              onClose={() => setShowBilingualEditor(false)}
+              onSaved={() => {
+                setShowBilingualEditor(false);
+                fetchPostsFromSupabase(blogLang);
+              }}
+              uploadFileToSupabase={uploadFileToSupabase}
+              showToast={showToast}
+            />
+          ) : !editingPost ? (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -809,6 +929,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </button>
 
                 <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingPost(null);
+                      setShowBilingualEditor(true);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-600/15 border border-blue-500/20 text-blue-400 text-xs font-semibold hover:bg-blue-600/25"
+                  >
+                    🇫🇷🇬🇧 Nouvel article bilingue
+                  </button>
                   <button
                     onClick={() => setBlogPreviewMode(!blogPreviewMode)}
                     className="px-3.5 py-1.5 rounded-xl glass-card text-xs font-semibold flex items-center gap-1.5 hover:bg-white/10"
@@ -1166,19 +1296,90 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* TAB 3: PAGES CONTENT */}
       {activeTab === "pages" && (
-        <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-blue-500/20 shadow-2xl space-y-6">
-          <h2 className="text-xl font-bold">Informations Personnelles</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-mono text-zinc-400">Nom Complet</label>
-              <input
-                type="text"
-                value={settings.authorName}
-                onChange={(e) => setSettings({ ...settings, authorName: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl glass-input text-xs"
-              />
+        <div className="space-y-8">
+          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/20 shadow-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold">
+                  Éditeur du contenu du site
+                </h2>
+                <p className="text-xs text-zinc-400 mt-2 max-w-3xl">
+                  Modifiez les contenus configurables de l'accueil, de la page
+                  À propos, de la page Contact et de votre identité sans
+                  toucher au code. Les versions françaises et anglaises sont
+                  conservées séparément.
+                </p>
+              </div>
+
+              <button
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                Enregistrer toutes les modifications
+              </button>
             </div>
-            <button onClick={handleSaveSettings} className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">
+          </div>
+
+          {pageSettingGroups.map((group) => (
+            <section
+              key={group.title}
+              className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/20 shadow-2xl space-y-6"
+            >
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold">{group.title}</h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  {group.description}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {group.fields.map((field) => (
+                  <div
+                    key={field.key}
+                    className={field.long ? "lg:col-span-2 space-y-2" : "space-y-2"}
+                  >
+                    <label className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
+                      {field.label}
+                    </label>
+
+                    {field.long ? (
+                      <textarea
+                        rows={5}
+                        value={String(settings[field.key] ?? "")}
+                        onChange={(event) =>
+                          setSettings({
+                            ...settings,
+                            [field.key]: event.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-3 rounded-xl glass-input text-xs leading-relaxed"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={String(settings[field.key] ?? "")}
+                        onChange={(event) =>
+                          setSettings({
+                            ...settings,
+                            [field.key]: event.target.value,
+                          })
+                        }
+                        className="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveSettings}
+              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
               Enregistrer
             </button>
           </div>

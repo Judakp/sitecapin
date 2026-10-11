@@ -24,6 +24,19 @@ export default defineConfig(() => {
       },
     },
 
+    build: {
+      cssCodeSplit: true, // Découpe le fichier CSS par page/composant pour réduire la taille initiale
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            supabase: ['@supabase/supabase-js'],
+            icons: ['lucide-react'],
+          },
+        },
+      },
+    },
+
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

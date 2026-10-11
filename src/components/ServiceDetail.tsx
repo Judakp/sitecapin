@@ -19,6 +19,7 @@ import {
 import { Language, ThemeMode, PageView, ServiceItem } from "../types";
 import { getServices, getFaq, getMethodology } from "../data/portfolioData";
 import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
+import { NotFound } from "./NotFound";
 
 interface ServiceDetailProps {
   slug: string;
@@ -47,10 +48,23 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
   const faqList = getFaq(language);
   const methodologySteps = getMethodology(language);
 
-  // Trouver le service correspondant par ID ou par slug
-  const service: ServiceItem =
-    services.find((s) => s.id === slug || s.title.toLowerCase().includes(slug.toLowerCase())) ||
-    services[0];
+  // Le slug doit correspondre exactement à un service existant.
+  // Aucun fallback vers le premier service : une URL inconnue doit rester 404.
+  const service = services.find(
+    (s) =>
+      s.id === slug ||
+      s.title.toLowerCase() === slug.toLowerCase()
+  );
+
+  if (!service) {
+    return (
+      <NotFound
+        language={language}
+        theme={theme}
+        onNavigate={onNavigate}
+      />
+    );
+  }
 
   // Helper pour les icônes Lucide
   const renderIcon = (iconName: string) => {

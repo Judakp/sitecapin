@@ -10,7 +10,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { BlogPost, Language, ThemeMode } from "../types";
-import { supabase } from "../lib/supabase";
+import { fetchPublicBlogPost } from "../data/blogUtils";
+import { BlogEngagement } from "../components/BlogEngagement";
 import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface BlogArticleProps {
@@ -41,35 +42,8 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
       try {
         setLoading(true);
 
-        // Recherche par slug ET par langue active dans Supabase
-        const { data, error } = await supabase
-          .from("blog_posts")
-          .select("*")
-          .eq("slug", slug)
-          .eq("language", language)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Erreur lors de la récupération de l'article :", error.message);
-        } else if (data && isMounted) {
-          const formattedArticle: BlogPost = {
-            id: data.id,
-            slug: data.slug,
-            title: data.title,
-            summary: data.summary,
-            content: data.content,
-            category: data.category,
-            readTime: data.read_time,
-            publishedDate: data.published_date,
-            coverImage: data.cover_image,
-            tags: data.tags || [],
-            keyTakeaways: data.key_takeaways || [],
-            author: data.author,
-          };
-          setArticle(formattedArticle);
-        } else if (isMounted) {
-          setArticle(null);
-        }
+        const formattedArticle = await fetchPublicBlogPost(language, slug);
+        if (isMounted) setArticle(formattedArticle);
       } catch (err) {
         console.error("Erreur réseau Supabase :", err);
       } finally {
@@ -205,6 +179,10 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
           <img
             src={article.coverImage}
             alt={article.title}
+            width={1600}
+            height={900}
+            decoding="async"
+            fetchPriority="high"
             className="w-full h-full object-cover"
           />
         </div>
@@ -235,6 +213,8 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
         } max-w-none text-sm sm:text-base leading-relaxed space-y-4 prose-headings:font-bold prose-a:text-blue-400 prose-blockquote:border-l-blue-500`}
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
+
+      <BlogEngagement postId={article.id} language={language} theme={theme} />
 
       {/* Footer Article & CTA Contact */}
       <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">

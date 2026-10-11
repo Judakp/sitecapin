@@ -26,7 +26,7 @@ export const translations = {
       pillBadge: "2026 Ready",
       titleStart: "Propulser vos idées avec",
       titleHighlight: "l'Intelligence Artificielle",
-      subtitle: "Je suis Capin Akpado, développeur web & mobile et spécialiste IA. J'aide les entreprises et professionnels ambitieux à concevoir des applications sur-mesure et à intégrer des agents IA autonomes et automatisations de pointe.",
+      subtitle: "J'aide les entreprises et professionnels ambitieux à concevoir des sites web, applications sur-mesure, agents IA autonomes et automatisations de pointe.",
       ctaTestAi: "Lancer l'Audit IA",
       ctaPortfolio: "Voir le Portfolio",
       ctaAbout: "En savoir plus sur moi →",
@@ -65,7 +65,7 @@ export const translations = {
       storyTitle: "Mon Parcours & Philosophie",
       storyP1: "Bonjour ! Je m'appelle **Capin Judicael Akpado**. Développeur web, mobile et spécialiste en solutions d'intelligence artificielle, j'accompagne les startups, PME et organisations dans la digitalisation et l'automatisation de leurs processus critiques.",
       storyP2: "Ma conviction est simple : la technologie doit supprimer les frictions, non en créer. Trop d'entreprises perdent un temps précieux sur des tâches répétitives ou s'enferment dans des architectures rigides. Mon rôle est de bâtir des plateformes web et mobiles fluides, robustes et équipées d'agents IA intelligents qui travaillent pour vous 24h/24.",
-      storyP3: "Chaque ligne de code que j'écris répond à un impératif de pérennité : zéro dette technique, sécurité renforcée, typage strict avec TypeScript et interfaces soignées au pixel près.",
+      storyP3: "Chaque ligne de code que j'écris répond à un impératif de pérennité : zéro dette technique, sécurité renforcée, typage strict et interfaces soignées au pixel près.",
 
       photoUploadTitle: "Personnaliser la photo de profil",
       photoUploadHint: "Glissez ou sélectionnez votre photo (PNG, JPG, WebP)",
@@ -414,7 +414,7 @@ export const translations = {
       storyTitle: "My Background & Philosophy",
       storyP1: "Hello! I am **Capin Judicael Akpado**. As a web and mobile engineer and artificial intelligence specialist, I partner with startups, SMBs, and modern teams to digitize and automate their mission-critical processes.",
       storyP2: "My conviction is clear: technology should eliminate friction, not create it. Too many organizations waste valuable hours on repetitive manual tasks or get locked into fragile architectures. My mission is to engineer smooth, robust web and mobile platforms powered by autonomous AI agents that work for you 24/7.",
-      storyP3: "Every line of code I craft adheres to long-term software standards: zero technical debt, rock-solid security, strict TypeScript types, and pixel-perfect design.",
+      storyP3: "Every line of code I craft adheres to long-term software standards: zero technical debt, rock-solid security, strict types, and pixel-perfect design.",
 
       photoUploadTitle: "Customize Profile Photo",
       photoUploadHint: "Drag or select your photo (PNG, JPG, WebP)",

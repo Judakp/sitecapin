@@ -4,36 +4,36 @@
 
 ## Langues
 
-- Français : https://capinakpado.com/fr/accueil
-- English : https://capinakpado.com/en/home
+- [Français](https://capinakpado.com/fr/accueil)
+- [English](https://capinakpado.com/en/home)
 
 ## Pages principales
 
-- À propos : https://capinakpado.com/fr/a-propos
-- About : https://capinakpado.com/en/about
-- Services : https://capinakpado.com/fr/services
-- Services (English) : https://capinakpado.com/en/services
-- Portfolio : https://capinakpado.com/fr/portfolio
-- Portfolio (English) : https://capinakpado.com/en/portfolio
-- Audit IA : https://capinakpado.com/fr/audit-ia
-- AI Audit : https://capinakpado.com/en/ai-audit
-- Blog : https://capinakpado.com/fr/blog
-- Blog (English) : https://capinakpado.com/en/blog
-- Guide IA Pro : https://capinakpado.com/fr/guide-ia-pro
-- AI Pro Guide : https://capinakpado.com/en/ai-pro-guide
-- Contact : https://capinakpado.com/fr/contact
-- Contact (English) : https://capinakpado.com/en/contact
+- [À propos](https://capinakpado.com/fr/a-propos)
+- [About](https://capinakpado.com/en/about)
+- [Services](https://capinakpado.com/fr/services)
+- [Services (English)](https://capinakpado.com/en/services)
+- [Portfolio](https://capinakpado.com/fr/portfolio)
+- [Portfolio (English)](https://capinakpado.com/en/portfolio)
+- [Audit IA](https://capinakpado.com/fr/audit-ia)
+- [AI Audit](https://capinakpado.com/en/ai-audit)
+- [Blog](https://capinakpado.com/fr/blog)
+- [Blog (English)](https://capinakpado.com/en/blog)
+- [Guide IA Pro](https://capinakpado.com/fr/guide-ia-pro)
+- [AI Pro Guide](https://capinakpado.com/en/ai-pro-guide)
+- [Contact](https://capinakpado.com/fr/contact)
+- [Contact (English)](https://capinakpado.com/en/contact)
 
 ## Services détaillés
 
-- Agents IA autonomes : https://capinakpado.com/fr/services/agents-ia-autonomes
-- Développement web et mobile : https://capinakpado.com/fr/services/developpement-web-mobile
-- SEO, GEO et visibilité IA : https://capinakpado.com/fr/services/seo-geo-visibilite-ia
+- [Agents IA autonomes](https://capinakpado.com/fr/services/agents-ia-autonomes)
+- [Développement web et mobile](https://capinakpado.com/fr/services/developpement-web-mobile)
+- [SEO, GEO et visibilité IA](https://capinakpado.com/fr/services/seo-geo-visibilite-ia)
 
 ## Informations légales
 
-- Conditions d'utilisation : https://capinakpado.com/fr/conditions-utilisation
-- Politique de confidentialité : https://capinakpado.com/fr/confidentialite
+- [Conditions d'utilisation](https://capinakpado.com/fr/conditions-utilisation)
+- [Politique de confidentialité](https://capinakpado.com/fr/confidentialite)
 
 ## À propos du contenu
 

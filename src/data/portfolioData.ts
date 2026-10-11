@@ -408,7 +408,7 @@ export const caseStudiesDataFr: CaseStudy[] = [
     title: "Finance AI Expert",
     client: "Particuliers & Actifs souhaitant optimiser leurs finances",
     category: "Agents IA & Automatisation",
-    badge: "Agent Bilingue Live",
+    badge: "Assistant Bilingue Live",
     shortDescription: "Assistant virtuel intelligent dédié au conseil financier personnalisé, à l'épargne et à la gestion des dépenses.",
     problem: "Difficulté pour les particuliers à obtenir des conseils financiers personnalisés et structurés sans engager de coûts de gestion élevés.",
     solution: "Déploiement d'un agent IA bilingue (FR/EN) capable d'analyser les habitudes de dépenses, de proposer des stratégies d'épargne sur-mesure et d'orienter vers des opportunités d'investissement adaptées.",
@@ -419,7 +419,7 @@ export const caseStudiesDataFr: CaseStudy[] = [
     ],
     technologies: ["React", "TypeScript", "Gemini API", "Tailwind CSS", "Netlify"],
     deliverables: [
-      "Agent IA conversationnel bilingue",
+      "Assistant IA conversationnel bilingue",
       "Interface utilisateur réactive & intuitive",
       "Module d'analyse budgétaire et d'épargne",
     ],
@@ -449,29 +449,6 @@ export const caseStudiesDataFr: CaseStudy[] = [
     liveUrl: "https://fabulous-dieffenbachia-627f92.netlify.app/",
   },
 
-  // 2. Luxious Immobilier
-  {
-    id: "luxious-immobilier",
-    title: "Luxious Immobilier",
-    client: "Acheteurs haut de gamme, vendeurs & investisseurs immobiliers",
-    category: "Web & Plateforme",
-    badge: "Immobilier de Luxe",
-    shortDescription: "Vitrine web d'exception et outil d'estimation en ligne pour l'immobilier d'habitation d'élite.",
-    problem: "Manque de visibilité en ligne et absence d'outils d'estimation instantanée pour capturer des mandats d'exception.",
-    solution: "Conception d'une plateforme web haut de gamme facilitant l'exploration de biens d'élite, l'estimation en ligne et la prise de contact directe.",
-    impact: [
-      { metric: "+50%", label: "Demandes d'estimation en ligne" },
-      { metric: "< 2s", label: "Temps de chargement des visuels" },
-      { metric: "100%", label: "UX/UI Responsive haut de gamme" },
-    ],
-    technologies: ["React", "TypeScript", "Tailwind CSS", "Netlify"],
-    deliverables: [
-      "Catalogue interactif de biens de prestige (Villas, Appartements)",
-      "Module d'estimation et d'évaluation immobilière",
-      "Formulaire de mise en relation directe avec l'agence",
-    ],
-    liveUrl: "https://taupe-starburst-d64cd8.netlify.app/",
-  },
 
   // 3. Urgencia
   {
@@ -504,7 +481,7 @@ export const caseStudiesDataFr: CaseStudy[] = [
     client: "Équipes RH, nouveaux employés & managers de Good Pasta",
     category: "Agents IA & Automatisation",
     badge: "Assistant Onboarding IA",
-    shortDescription: "Agent IA d'intégration et de support opérationnel par département pour les salariés de Good Pasta.",
+    shortDescription: "Assistant IA d'intégration et de support opérationnel par département pour les salariés de Good Pasta.",
     problem: "Interruptions fréquentes et perte de productivité du personnel expérimenté sollicité en continu par les nouveaux arrivants.",
     solution: "Conception d'un agent IA conversationnel entraîné sur les procédures internes pour orienter et former les employés selon leur pôle métier.",
     impact: [
@@ -514,7 +491,7 @@ export const caseStudiesDataFr: CaseStudy[] = [
     ],
     technologies: ["React", "TypeScript", "Gemini API", "Tailwind CSS", "Netlify"],
     deliverables: [
-      "Agent IA de support par département métier",
+      "Assistant IA de support par département métier",
       "Base de connaissances interne structurée pour l'IA",
       "Interface conversationnelle d'onboarding autonome",
     ],
@@ -522,52 +499,7 @@ export const caseStudiesDataFr: CaseStudy[] = [
   },
 
   // 5. PixelDebate
-  {
-    id: "pixeldebate",
-    title: "PixelDebate",
-    client: "Amateurs d'art, psychologues & public curieux du comportement humain",
-    category: "Agents IA & Automatisation",
-    badge: "Projet Hackathon IA",
-    shortDescription: "Chatbot multimodal analysant les dessins utilisateurs pour en déduire des traits psycho-sociologiques.",
-    problem: "Absence d'outils interactifs ludiques liant l'expression artistique visuelle à l'analyse comportementale et psychologique.",
-    solution: "Création d'une application IA où l'utilisateur dessine sur un canevas numérique et reçoit une analyse psycho-sociologique instantanée générée par vision multimodale.",
-    impact: [
-      { metric: "100%", label: "Analyse multimodale automatique" },
-      { metric: "< 4s", label: "Génération du profil psychologique" },
-      { metric: "Hackathon", label: "Projet primé en compétition" },
-    ],
-    technologies: ["React", "TypeScript", "Gemini Vision API", "HTML5 Canvas", "Netlify"],
-    deliverables: [
-      "Canevas de dessin interactif en ligne",
-      "Pipeline d'analyse d'image par vision artificielle",
-      "Moteur d'interprétation comportementale et sociologique",
-    ],
-    liveUrl: "https://fluffy-marzipan-694223.netlify.app/",
-  },
 
-  // 6. Rose Bloom
-  {
-    id: "rose-bloom",
-    title: "Rose Bloom",
-    client: "Amateurs d'artisanat d'art, décorateurs & acheteurs d'objets en bois",
-    category: "Web & Plateforme",
-    badge: "E-commerce & Artisanat",
-    shortDescription: "Site vitrine et catalogue d'artisanat d'art valorisant des créations uniques en bois sur-mesure.",
-    problem: "Difficulté pour l'artisan d'exposer son catalogue de créations en bois et de capter des commandes personnalisées hors atelier.",
-    solution: "Développement d'une plateforme web élégante et épurée mettant en valeur le travail du bois et facilitant la demande de devis.",
-    impact: [
-      { metric: "100%", label: "Mise en valeur du catalogue" },
-      { metric: "+40%", label: "Demandes de devis en ligne" },
-      { metric: "< 1.5s", label: "Chargement de la galerie" },
-    ],
-    technologies: ["React", "TypeScript", "Tailwind CSS", "Netlify"],
-    deliverables: [
-      "Galerie d'exposition haute résolution des objets d'art",
-      "Formulaire de commande et devis sur-mesure",
-      "Présentation de l'histoire et du savoir-faire artisanal",
-    ],
-    liveUrl: "https://elaborate-scone-c66085.netlify.app/",
-  },
 
   // 7. CapinAkpado.com
   {
@@ -824,7 +756,7 @@ export const caseStudiesDataEn: CaseStudy[] = [
     title: "Finance AI Expert",
     client: "Individuals & Professionals seeking financial optimization",
     category: "AI Agents & Automation",
-    badge: "Live Bilingual Agent",
+    badge: "Live Bilingual Assistant",
     shortDescription: "Intelligent virtual assistant dedicated to personalized financial advice, savings strategies, and expense tracking.",
     problem: "Lack of accessible, tailored, and structured financial guidance for individuals without paying high advisory fees.",
     solution: "Deployment of a bilingual (FR/EN) AI agent capable of analyzing spending habits, crafting custom savings plans, and guiding users toward suitable investment decisions.",
@@ -863,30 +795,6 @@ export const caseStudiesDataEn: CaseStudy[] = [
       "Secure employee download portal",
     ],
     liveUrl: "https://fabulous-dieffenbachia-627f92.netlify.app/",
-  },
-
-  // 2. Luxious Immobilier
-  {
-    id: "luxious-immobilier",
-    title: "Luxious Immobilier",
-    client: "High-net-worth Buyers, Sellers & Real Estate Investors",
-    category: "Web & Platform",
-    badge: "Luxury Real Estate",
-    shortDescription: "High-end real estate web portal with online property valuation and listing presentation.",
-    problem: "Lack of brand digital authority and absence of instant online property valuation tools to secure exclusive mandates.",
-    solution: "Designed a premium luxury real estate platform enabling fluid property exploration, valuation estimation, and direct inquiry.",
-    impact: [
-      { metric: "+50%", label: "Online valuation leads" },
-      { metric: "< 2s", label: "High-res media load speed" },
-      { metric: "100%", label: "Premium responsive UI/UX" },
-    ],
-    technologies: ["React", "TypeScript", "Tailwind CSS", "Netlify"],
-    deliverables: [
-      "Interactive luxury property showcase (Villas, Apartments)",
-      "Online property valuation module",
-      "Direct contact & inquiry booking system",
-    ],
-    liveUrl: "https://taupe-starburst-d64cd8.netlify.app/",
   },
 
   // 3. Urgencia
@@ -938,52 +846,7 @@ export const caseStudiesDataEn: CaseStudy[] = [
   },
 
   // 5. PixelDebate
-  {
-    id: "pixeldebate",
-    title: "PixelDebate",
-    client: "Art Enthusiasts, Psychologists & Behavioral Science Researchers",
-    category: "AI Agents & Automation",
-    badge: "AI Hackathon Winner",
-    shortDescription: "Multimodal AI agent evaluating user canvas sketches to deduce psycho-sociological behavior.",
-    problem: "Lack of interactive tools blending digital artistic expression with instant psychological and behavioral analysis.",
-    solution: "Engineered an AI application where users sketch on a digital canvas and receive real-time behavioral insights via multimodal computer vision.",
-    impact: [
-      { metric: "100%", label: "Automated vision analysis" },
-      { metric: "< 4s", label: "Psychological profile generation" },
-      { metric: "Hackathon", label: "Award-winning project build" },
-    ],
-    technologies: ["React", "TypeScript", "Gemini Vision API", "HTML5 Canvas", "Netlify"],
-    deliverables: [
-      "Interactive online drawing canvas",
-      "Computer vision image parsing pipeline",
-      "Behavioral & sociological interpretation engine",
-    ],
-    liveUrl: "https://fluffy-marzipan-694223.netlify.app/",
-  },
 
-  // 6. Rose Bloom
-  {
-    id: "rose-bloom",
-    title: "Rose Bloom",
-    client: "Woodcraft Enthusiasts, Interior Designers & Custom Art Buyers",
-    category: "Web & Platform",
-    badge: "Artisan E-commerce",
-    shortDescription: "Artisanal showcase website highlighting handcrafted custom wooden creations and art objects.",
-    problem: "Limited reach for fine woodworking artisans to showcase their portfolio and capture custom orders beyond their physical workshop.",
-    solution: "Built an elegant web showcase designed to display woodwork craftsmanship and capture custom quote requests effortlessly.",
-    impact: [
-      { metric: "100%", label: "Artistic catalog exposure" },
-      { metric: "+40%", label: "Online quote inquiries" },
-      { metric: "< 1.5s", label: "Gallery page load time" },
-    ],
-    technologies: ["React", "TypeScript", "Tailwind CSS", "Netlify"],
-    deliverables: [
-      "High-resolution art craft gallery",
-      "Custom project quote request form",
-      "Artisan background & craftsmanship storytelling section",
-    ],
-    liveUrl: "https://elaborate-scone-c66085.netlify.app/",
-  },
 
   // 7. CapinAkpado.com
   {

@@ -20,6 +20,7 @@ import { Language, ThemeMode } from "../types";
 import { useTranslation } from "../data/translations";
 import { getFaq } from "../data/portfolioData";
 import { getSiteSettings } from "../data/contentStore";
+import { supabase } from "../lib/supabase";
 import { SEO } from "./SEO"; // <-- IMPORT DU COMPOSANT SEO
 
 interface ContactSectionProps {
@@ -89,7 +90,6 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
     }
   }, [prefilledMessage]);
 
-  // Mettre à jour la date par défaut en cas de changement de langue
   useEffect(() => {
     setSelectedDate(isFr ? "Mardi 6 Octobre 2026" : "Tuesday, October 6, 2026");
   }, [isFr]);
@@ -98,56 +98,63 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
     e.preventDefault();
     setFormError("");
 
-    // Validation des données côté client
     if (!name.trim() || !email.trim() || !message.trim()) {
       setFormError(isFr ? "Veuillez remplir tous les champs obligatoires." : "Please fill in all required fields.");
       return;
     }
 
-    // Assainissement des données saisies
-    const sanitizedData = {
+    const payload = {
       name: sanitizeInput(name),
       email: sanitizeInput(email),
       phone: sanitizeInput(phone),
       projectType: sanitizeInput(projectType),
       budget: sanitizeInput(budget),
       message: sanitizeInput(message),
-      _replyto: sanitizeInput(email),
-      _subject: `Nouveau message de ${sanitizeInput(name)} - Portfolio`
     };
 
     setIsSubmitting(true);
 
     try {
-      // Envoi sécurisé vers Formspree acheminé vers contact@capinakpado.com
-      const response = await fetch("https://formspree.io/f/xknakpado", { 
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify(sanitizedData)
-      });
+      // 1. Sauvegarde dans la base de données Supabase
+      const { error: dbError } = await supabase
+        .from("contact_messages")
+        .insert([
+          {
+            name: payload.name,
+            email: payload.email,
+            phone: payload.phone,
+            project_type: payload.projectType,
+            budget: payload.budget,
+            message: payload.message,
+          },
+        ]);
 
-      if (response.ok) {
-        setIsSent(true);
-        setName("");
-        setEmail("");
-        setPhone("");
-        setBudget("");
-        setMessage("");
-      } else {
-        setFormError(
-          isFr 
-            ? "Une erreur est survenue lors de l'envoi. Veuillez réessayer ou m'écrire directement à contact@capinakpado.com." 
-            : "An error occurred. Please try again or email contact@capinakpado.com directly."
-        );
+      if (dbError) {
+        console.warn("Avertissement sauvegarde DB :", dbError.message);
       }
-    } catch (error) {
+
+      // 2. Envoi de l'email via la Supabase Edge Function et Resend
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "send-contact-email",
+        { body: payload }
+      );
+
+      if (fnError || data?.error) {
+        throw new Error(fnError?.message || data?.error);
+      }
+
+      setIsSent(true);
+      setName("");
+      setEmail("");
+      setPhone("");
+      setBudget("");
+      setMessage("");
+    } catch (error: any) {
+      console.error("Erreur d'envoi :", error);
       setFormError(
-        isFr 
-          ? "Impossible d'envoyer le message. Vérifiez votre connexion internet." 
-          : "Failed to send message. Please check your internet connection."
+        isFr
+          ? "Une erreur est survenue lors de l'envoi. Veuillez réessayer ou m'écrire directement à contact@capinakpado.com."
+          : "An error occurred. Please try again or email contact@capinakpado.com directly."
       );
     } finally {
       setIsSubmitting(false);

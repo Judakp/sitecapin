@@ -23,10 +23,12 @@ import {
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import { NotFound } from "./components/NotFound";
 
 import { Language, PageView, ThemeMode } from "./types";
 import { getPageFromPath, getPagePath } from "./routing/routes";
 import { detectBrowserLanguage } from "./routing/language";
+import { syncSiteSettingsFromSupabase } from "./data/contentStore";
 
 /**
  * ============================================================
@@ -204,7 +206,7 @@ function ServiceDetailRouteWrapper({
 
   return (
     <ServiceDetail
-      slug={slug || "agents-ia-autonomes"}
+      slug={slug || ""}
       language={language}
       theme={theme}
       onNavigate={onNavigate}
@@ -232,7 +234,13 @@ function AppContent() {
 
   const routeInfo = getPageFromPath(location.pathname);
 
-  const language: Language = routeInfo?.language ?? "fr";
+  const pathnameLanguage: Language =
+    location.pathname.toLowerCase() === "/en" ||
+    location.pathname.toLowerCase().startsWith("/en/")
+      ? "en"
+      : "fr";
+
+  const language: Language = routeInfo?.language ?? pathnameLanguage;
 
   const currentPage: PageView =
     routeInfo?.page && PUBLIC_PAGES.includes(routeInfo.page)
@@ -253,6 +261,12 @@ function AppContent() {
 
   const [contactPrefilledMessage, setContactPrefilledMessage] =
     useState<string>("");
+
+  // Synchronise les réglages CMS depuis Supabase afin que les contenus
+  // modifiés dans le Dashboard soient disponibles sur tous les appareils.
+  useEffect(() => {
+    void syncSiteSettingsFromSupabase();
+  }, []);
 
   /**
    * ----------------------------------------------------------
@@ -916,13 +930,10 @@ function AppContent() {
             <Route
               path="*"
               element={
-                <Navigate
-                  to={
-                    language === "en"
-                      ? "/en/home"
-                      : "/fr/accueil"
-                  }
-                  replace
+                <NotFound
+                  language={language}
+                  theme={theme}
+                  onNavigate={(page) => handleNavigate(page)}
                 />
               }
             />

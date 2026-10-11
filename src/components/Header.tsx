@@ -48,7 +48,6 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Listen for storage changes across windows/components
   useEffect(() => {
     const handleStorageChange = () => {
       setLogoConfig(getLogoConfig());
@@ -89,7 +88,6 @@ export const Header: React.FC<HeaderProps> = ({
     { id: "contact", label: t.nav.contact },
   ];
 
-  // Background style helper for logo container
   const getLogoBgClass = () => {
     switch (logoConfig.bgColor) {
       case "dark":
@@ -121,38 +119,39 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo & Identity: Capin Akpado */}
           <div className="flex items-center gap-3">
             <button
-  id="logo-icon-button"
-  type="button"
-  onClick={() => handleNavClick("home")}
-  title="Capin Akpado"
-  style={{
-    borderRadius:
-      logoConfig.borderRadius >= 999
-        ? "9999px"
-        : `${logoConfig.borderRadius}px`,
-    padding: "0px",
-  }}
-  className={`w-10 h-10 ${getLogoBgClass()} flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-600/30 hover:scale-105 transition-all border border-white/20 overflow-hidden relative group cursor-pointer shrink-0`}
->
-  <img
-    src={logoPrincipal}
-    alt="Logo Capin Akpado"
-    className="w-full h-full object-cover"
-  />
-</button>
+              id="logo-icon-button"
+              type="button"
+              onClick={() => handleNavClick("home")}
+              title="Capin Akpado"
+              style={{
+                borderRadius:
+                  logoConfig.borderRadius >= 999
+                    ? "9999px"
+                    : `${logoConfig.borderRadius}px`,
+                padding: "0px",
+              }}
+              className={`w-10 h-10 ${getLogoBgClass()} flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-600/30 hover:scale-105 transition-all border border-white/20 overflow-hidden relative group cursor-pointer shrink-0`}
+            >
+              <img
+                src={logoPrincipal}
+                alt="Logo Capin Akpado"
+                className="w-full h-full object-cover"
+              />
+            </button>
             <button
               id="logo-text-button"
               onClick={() => handleNavClick("home")}
               className="text-left group transition-all flex items-center gap-2"
             >
+              {/* MODIFICATION ICI : Utilisation de font-dancing avec un beau contraste de graisse */}
               <span
-                className={`font-semibold tracking-normal text-sm sm:text-[15px] font-sans transition-colors ${
+                className={`font-dancing tracking-wide text-lg sm:text-xl transition-colors ${
                   theme === "dark"
                     ? "text-zinc-100 group-hover:text-white"
                     : "text-slate-800 group-hover:text-slate-900"
                 }`}
               >
-                Capin <span className="text-blue-500 font-bold">Akpado</span>
+                <span className="font-medium">Capin</span> <span className="text-blue-500 font-extrabold">Akpado</span>
               </span>
 
               <span className="hidden xl:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/30">
@@ -199,7 +198,6 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Controls: Explicit Language Switcher, Theme & Primary CTA */}
           <div className="hidden lg:flex items-center gap-3">
             
-            {/* Highly Explicit Dual Language Switcher: 🇫🇷 FR | 🇬🇧 EN */}
             <div
               id="header-language-selector"
               className={`flex items-center p-1 rounded-full border transition-all ${
@@ -244,11 +242,11 @@ export const Header: React.FC<HeaderProps> = ({
                     : "text-slate-500 hover:text-slate-900"
                 }`}
               >
-                <span>EN EN</span>
+                <span>🇬🇧 EN</span>
               </button>
             </div>
 
-            {/* Theme Switcher Button (Dark / Light) */}
+            {/* Theme Switcher Button */}
             <button
               id="header-theme-toggle"
               onClick={onToggleTheme}
@@ -271,7 +269,7 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
-            {/* Primary Action Button: Le Guide IA Pro */}
+            {/* Primary Action Button */}
             <button
               id="header-cta-guide-ia-pro"
               onClick={() => handleNavClick("guide-ia-pro")}
@@ -288,7 +286,6 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Mobile Menu & Quick Controls */}
           <div className="flex items-center gap-2 md:hidden">
             
-            {/* Mobile Explicit Language Switcher */}
             <div
               className={`flex items-center p-0.5 rounded-lg border text-xs font-mono font-bold ${
                 theme === "dark"

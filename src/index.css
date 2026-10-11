@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Dancing+Script:wght@500;700&family=Satisfy&display=swap');
 @import "tailwindcss";
 
 @layer base {
@@ -21,6 +22,11 @@
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+  
+  /* Les 3 classes pour tester votre logo signature (écrit à la main) */
+  .font-caveat { font-family: 'Caveat', cursive; }
+  .font-dancing { font-family: 'Dancing Script', cursive; }
+  .font-satisfy { font-family: 'Satisfy', cursive; }
 }
 
 /* Frosted Glass Dark Theme */

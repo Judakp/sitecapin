@@ -1,6 +1,7 @@
 import { BlogPost, Language, LogoConfig, ServiceItem, CaseStudy, NewsletterSubscriber } from "../types";
 import { blogPostsFr, blogPostsEn } from "./blogData";
 import { servicesDataFr, servicesDataEn, caseStudiesDataFr, caseStudiesDataEn } from "./portfolioData";
+import { supabase } from "../lib/supabase";
 
 export interface SiteSettings {
   authorName: string;
@@ -59,7 +60,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   authorRoleEn: "Web, mobile, and AI developer",
   email: "contact@capinakpado.com",
   phone: "+229 01 67 33 73 85",
-  location: "Cotonou, Bénin / International (Distanciel)",
+  location: "Ouidah, Bénin / International (Distanciel)",
   linkedinUrl: "https://www.linkedin.com/in/capin-judica%C3%ABl-akpado-4a4780163/",
   githubUrl: "https://github.com/Judakp",
   whatsappUrl: "https://wa.me/2290167337385",
@@ -88,11 +89,12 @@ const DEFAULT_SETTINGS: SiteSettings = {
   aboutRoleFr: "Développeur Web, Mobile & IA",
   aboutRoleEn: "Web, Mobile & AI Developer",
   
-  aboutShortBioFr: "Développeur passionné combinant création logicielle moderne (React, Flutter, IA), expertise en stratégie digitale (SEO, Marketing) et diplômé en Gestion des Ressources Humaines. J'accompagne les entreprises dans la conception d'applications performantes et optimisées pour la croissance.",
-  aboutShortBioEn: "Developer passionate about combining modern software creation (React, Flutter, AI), digital strategy expertise (SEO, Marketing), and holding a Bachelor's degree in Human Resources. I help businesses build high-performance, growth-ready applications.",
+  aboutShortBioFr: "Développeur passionné combinant création logicielle moderne, expertise en stratégie digitale (SEO, Marketing) et diplôme en Gestion des Ressources Humaines. J'accompagne les entreprises dans la conception d'applications performantes et optimisées pour la croissance.",
+  aboutShortBioEn: "Developer passionate about combining modern software creation, digital strategy expertise (SEO, Marketing), and holding a Bachelor's degree in Human Resources. I help businesses build high-performance, growth-ready applications.",
   
-  aboutBioFr: "Fort d'un parcours transversal combinant une licence en Gestion des Ressources Humaines, une solide expérience en rédaction web SEO, community management et marketing digital, je conçois des sites web, applications web, applications mobiles et agents IA autonomes. Cette double expertise technique et stratégique me permet de concevoir des solutions applicatives parfaitement référencées, axées sur l'expérience utilisateur et alignées avec les enjeux organisationnels des entreprises.",
-  aboutBioEn: "With a multifaceted background combining a Bachelor's degree in Human Resources Management and extensive experience in SEO copywriting, community management, and digital marketing, I engineer websites, web platforms, mobile apps, and autonomous AI agents. This dual technical and strategic expertise allows me to build fully search-optimized, user-centric software aligned with core business operations.",
+  aboutBioFr: "Mon profil allie une formation initiale en Ressources Humaines à une passion pour le web, forgée par des années d'expérience en marketing digital et SEO. Aujourd'hui, je mets cette polyvalence au service du développement de sites web, d'applications mobiles et d'agents IA autonomes. Cette double expertise technique et stratégique me permet de concevoir des solutions applicatives parfaitement référencées, axées sur l'expérience utilisateur et alignées avec les enjeux des entreprises.",
+
+  aboutBioEn: "My professional background blends a foundation in Human Resources with deep expertise in digital marketing and SEO. Today, I channel this versatile background into developing high-performance websites, mobile apps, and autonomous AI agents. This dual technical and strategic expertise allows me to build fully search-optimized, user-centric software aligned with core business operations.",
   
   aboutPhilosophyFr: "Je crois en une ingénierie pragmatique et sobre : la technologie n'a de sens que si elle résout un problème réel avec élégance. Chaque ligne de code, chaque interface et chaque automatisation doit simplifier l'expérience humaine, éliminer la friction inutile et apporter une valeur mesurable et durable.",
   aboutPhilosophyEn: "I believe in pragmatic and purposeful engineering: technology only matters if it elegantly solves a real-world problem. Every line of code, interface, and automated workflow must simplify human effort, remove friction, and deliver measurable, long-term value.",
@@ -191,6 +193,30 @@ export function saveSiteSettings(settings: SiteSettings): void {
     window.dispatchEvent(new CustomEvent("capin_content_updated", { detail: { type: "settings" } }));
   } catch (e) {
     console.error("Failed to save site settings:", e);
+  }
+}
+
+export async function syncSiteSettingsFromSupabase(): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("settings")
+      .eq("id", "global")
+      .maybeSingle();
+
+    if (error || !data?.settings) return;
+
+    const merged = { ...DEFAULT_SETTINGS, ...data.settings };
+    localStorage.setItem("capin_site_settings", JSON.stringify(merged));
+
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(
+      new CustomEvent("capin_content_updated", {
+        detail: { type: "settings", source: "supabase" },
+      })
+    );
+  } catch (error) {
+    console.warn("[contentStore] Impossible de synchroniser les réglages :", error);
   }
 }
 

@@ -1,0 +1,9 @@
+name = "capinakpado-blog-metadata"
+main = "worker.js"
+compatibility_date = "2026-10-09"
+
+# Do not put secret values in this file.
+# Configure these values with `wrangler secret put`:
+# - ORIGIN_URL
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY

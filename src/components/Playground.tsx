@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   Bot,
@@ -155,112 +155,278 @@ export const Playground: React.FC<PlaygroundProps> = ({
     setQuotaReached(newCount >= MAX_DAILY_SIMULATIONS);
   };
 
-  // Form States for Automation
-  const [autoIndustry, setAutoIndustry] = useState("Services & Conseil B2B");
-  const [autoDescription, setAutoDescription] = useState("Cabinet de conseil en stratégie et organisation pour dirigeants de PME. Nous accompagnons nos clients sur des missions de 3 à 6 mois.");
-  const [autoTeamSize, setAutoTeamSize] = useState("5-15 personnes");
-  const [autoBottleneck, setAutoBottleneck] = useState("Relance des devis en attente et tri manuel des emails entrants");
-  const [autoVolume, setAutoVolume] = useState("60+ dossiers / mois");
+  // ---------------------------------------------------------------------------
+  // Bilingual Playground content
+  // The internal values are localized too, so the AI receives coherent data
+  // in the selected language. User-edited values are preserved when switching
+  // language; only untouched default values are translated automatically.
+  // ---------------------------------------------------------------------------
+  const playgroundDefaults = {
+    fr: {
+      automation: {
+        industry: "Services & Conseil B2B",
+        description: "Cabinet de conseil en stratégie et organisation pour dirigeants de PME. Nous accompagnons nos clients sur des missions de 3 à 6 mois.",
+        team: "5-15 personnes",
+        bottleneck: "Relance des devis en attente et tri manuel des emails entrants",
+        volume: "60+ dossiers / mois",
+      },
+      web: {
+        activity: "Cabinet de Conseil & Stratégie",
+        description: "Cabinet d'avocats d'affaires et juristes spécialisés dans les fusions, levées de fonds et structuration contractuelle.",
+        goal: "Générer des rendez-vous qualifiés",
+        style: "Frosted Glass Épuré, Moderne & High-End",
+        conversion: "Prise de RDV Calendly directe avec questionnaire",
+      },
+      app: {
+        type: "Application Terrain pour Techniciens & Experts",
+        description: "Société de maintenance et d'audit technique dont les experts réalisent 4 à 8 visites par jour sur site.",
+        feature: "Dictée vocale IA & Génération de rapports d'intervention PDF signés",
+        platform: "PWA & Mobile (iOS / Android) avec mode hors-ligne",
+      },
+    },
+    en: {
+      automation: {
+        industry: "B2B Consulting & Advisory",
+        description: "Strategy and organizational consulting firm supporting SME executives and general managers on 3-to-6-month engagements.",
+        team: "5-15 people",
+        bottleneck: "Following up on pending quotes and manually sorting incoming emails",
+        volume: "60+ cases / month",
+      },
+      web: {
+        activity: "Consulting & Strategy Firm",
+        description: "Business law and corporate legal advisory firm specializing in mergers, fundraising and contract structuring.",
+        goal: "Generate qualified appointments",
+        style: "Clean Frosted Glass, Modern & High-End",
+        conversion: "Direct Calendly booking with qualification questionnaire",
+      },
+      app: {
+        type: "Field App for Technicians & Experts",
+        description: "Maintenance and technical auditing company whose experts conduct 4 to 8 on-site visits per day.",
+        feature: "AI voice dictation & generation of signed PDF service reports",
+        platform: "PWA & Mobile (iOS / Android) with offline mode",
+      },
+    },
+  } as const;
 
-  // Form States for Web Architect / Site Web
-  const [webActivity, setWebActivity] = useState("Cabinet de Conseil & Stratégie");
-  const [webDescription, setWebDescription] = useState("Cabinet d'avocats d'affaires et juristes spécialisés dans les fusions, levées de fonds et structuration contractuelle.");
-  const [webGoal, setWebGoal] = useState("Générer des rendez-vous qualifiés");
-  const [webStyle, setWebStyle] = useState("Frosted Glass Épuré, Moderne & High-End");
-  const [webConversion, setWebConversion] = useState("Prise de RDV Calendly directe avec questionnaire");
+  const [autoIndustry, setAutoIndustry] = useState(playgroundDefaults[language].automation.industry);
+  const [autoDescription, setAutoDescription] = useState(playgroundDefaults[language].automation.description);
+  const [autoTeamSize, setAutoTeamSize] = useState(playgroundDefaults[language].automation.team);
+  const [autoBottleneck, setAutoBottleneck] = useState(playgroundDefaults[language].automation.bottleneck);
+  const [autoVolume, setAutoVolume] = useState(playgroundDefaults[language].automation.volume);
 
-  // Form States for Mobile App
-  const [appType, setAppType] = useState("Application Terrain pour Techniciens & Experts");
-  const [appDescription, setAppDescription] = useState("Société de maintenance et d'audit technique dont les experts réalisent 4 à 8 visites par jour sur site.");
-  const [appFeature, setAppFeature] = useState("Dictée vocale IA & Génération de rapports d'intervention PDF signés");
-  const [appPlatform, setAppPlatform] = useState("PWA & Mobile (iOS / Android) avec mode hors-ligne");
+  const [webActivity, setWebActivity] = useState(playgroundDefaults[language].web.activity);
+  const [webDescription, setWebDescription] = useState(playgroundDefaults[language].web.description);
+  const [webGoal, setWebGoal] = useState(playgroundDefaults[language].web.goal);
+  const [webStyle, setWebStyle] = useState(playgroundDefaults[language].web.style);
+  const [webConversion, setWebConversion] = useState(playgroundDefaults[language].web.conversion);
 
-  // Presets
-  const automationPresets = [
-    {
-      name: "💼 Conseil B2B",
-      industry: "Cabinet de Conseil & Stratégie",
-      description: "Conseil en transformation et gestion d'entreprise pour dirigeants et directeurs généraux.",
-      team: "5-15 personnes",
-      bottleneck: "Relance de devis sans réponse et tri des demandes de contact",
-      volume: "40+ devis / mois",
-    },
-    {
-      name: "🛒 E-commerce & SAV",
-      industry: "Boutique E-commerce & D2C",
-      description: "Boutique en ligne avec catalogue de 500+ références et flux régulier de commandes et questions clients.",
-      team: "1-4 personnes",
-      bottleneck: "Réponses répétitives au SAV (suivi de colis, retours, FAQ)",
-      volume: "300+ tickets / mois",
-    },
-    {
-      name: "🏢 Immobilier & Gestion",
-      industry: "Agence Immobilière & Gestion Locative",
-      description: "Agence immobilière indépendante gérant mandats de vente, locations et états des lieux.",
-      team: "5-15 personnes",
-      bottleneck: "Qualification des acquéreurs et planification des visites",
-      volume: "120+ leads / mois",
-    },
-    {
-      name: "🛠️ Artisans & BTP",
-      industry: "Rénovation & Second Œuvre",
-      description: "Entreprise artisanale de rénovation avec chantiers actifs et gestion administrative le soir.",
-      team: "1-4 personnes",
-      bottleneck: "Rédaction des devis le soir après les chantiers et relances",
-      volume: "25 chantiers / mois",
-    },
-  ];
+  const [appType, setAppType] = useState(playgroundDefaults[language].app.type);
+  const [appDescription, setAppDescription] = useState(playgroundDefaults[language].app.description);
+  const [appFeature, setAppFeature] = useState(playgroundDefaults[language].app.feature);
+  const [appPlatform, setAppPlatform] = useState(playgroundDefaults[language].app.platform);
 
-  const webPresets = [
-    {
-      name: "🏛️ Cabinet d'Avocats / Conseil",
-      activity: "Cabinet d'Avocats d'Affaires",
-      description: "Prestations juridiques et fiscales haut de gamme pour chefs d'entreprise et investisseurs.",
-      goal: "Générer des rendez-vous qualifiés",
-      style: "Frosted Glass Épuré, Neutre Sombre & Typographie Prestige",
-      conversion: "Prise de RDV direct connectée à l'agenda avec questionnaire",
-    },
-    {
-      name: "💻 SaaS & Startup B2B",
-      activity: "Plateforme Logicielle B2B",
-      description: "Solution SaaS facilitant la gestion de projets et la collaboration entre équipes décentralisées.",
-      goal: "Vendre des prestations / abonnements",
-      style: "Moderne Tech, Micro-animations fluides & Dark Mode",
-      conversion: "Démonstrateur produit interactif & Essai gratuit 14 jours",
-    },
-    {
-      name: "🎓 Académie & Formation",
-      activity: "Organisme de Formation Dirigeants",
-      description: "Programmes immersifs et masterclasses certifiantes pour cadres et entrepreneurs.",
-      goal: "Asseoir l'autorité & recruter",
-      style: "High-Contrast Lumineux & Preuves Sociales",
-      conversion: "Téléchargement de syllabus & Candidature express",
-    },
-  ];
+  const previousLanguageRef = useRef<Language>(language);
 
-  const appPresets = [
-    {
-      name: "📋 Diagnostic Terrain",
-      type: "Application Terrain pour Techniciens & Experts",
-      description: "Techniciens itinérants effectuant des audits techniques et diagnostics sur le terrain.",
-      feature: "Dictée vocale IA & Génération de rapports d'intervention PDF signés",
-      platform: "PWA & Mobile (iOS / Android) avec mode hors-ligne",
-    },
-    {
-      name: "👥 Portail Client VIP",
-      type: "Portail Client Privé & Validation de Livrables",
-      description: "Cabinet d'audit délivrant des documents confidentiels et des suivis de projets personnalisés.",
-      feature: "Chatbot IA avec mémoire de projet et validation de jalons en 1 clic",
-      platform: "Web & Mobile PWA sécurisée",
-    },
-    {
-      name: "📊 Tableau de Bord Décisionnel",
-      type: "Cockpit Opérationnel Dirigeant",
-      description: "Groupe multisites avec besoin de centraliser et consolider les métriques financières en direct.",
-      feature: "Synthèse quotidienne IA des KPIs financiers & alertes de marge",
-      platform: "Multi-écrans & Mobile Responsive",
-    },
-  ];
+  useEffect(() => {
+    const previousLanguage = previousLanguageRef.current;
+    if (previousLanguage === language) return;
+
+    const previous = playgroundDefaults[previousLanguage];
+    const next = playgroundDefaults[language];
+
+    // Translate only values that still contain the previous language's default.
+    // This avoids overwriting information typed by the visitor.
+    setAutoIndustry((current) => current === previous.automation.industry ? next.automation.industry : current);
+    setAutoDescription((current) => current === previous.automation.description ? next.automation.description : current);
+    setAutoTeamSize((current) => current === previous.automation.team ? next.automation.team : current);
+    setAutoBottleneck((current) => current === previous.automation.bottleneck ? next.automation.bottleneck : current);
+    setAutoVolume((current) => current === previous.automation.volume ? next.automation.volume : current);
+
+    setWebActivity((current) => current === previous.web.activity ? next.web.activity : current);
+    setWebDescription((current) => current === previous.web.description ? next.web.description : current);
+    setWebGoal((current) => current === previous.web.goal ? next.web.goal : current);
+    setWebStyle((current) => current === previous.web.style ? next.web.style : current);
+    setWebConversion((current) => current === previous.web.conversion ? next.web.conversion : current);
+
+    setAppType((current) => current === previous.app.type ? next.app.type : current);
+    setAppDescription((current) => current === previous.app.description ? next.app.description : current);
+    setAppFeature((current) => current === previous.app.feature ? next.app.feature : current);
+    setAppPlatform((current) => current === previous.app.platform ? next.app.platform : current);
+
+    previousLanguageRef.current = language;
+  }, [language]);
+
+  const automationPresets = language === "fr"
+    ? [
+        {
+          name: "💼 Conseil B2B",
+          industry: "Cabinet de Conseil & Stratégie",
+          description: "Conseil en transformation et gestion d'entreprise pour dirigeants et directeurs généraux.",
+          team: "5-15 personnes",
+          bottleneck: "Relance de devis sans réponse et tri des demandes de contact",
+          volume: "40+ devis / mois",
+        },
+        {
+          name: "🛒 E-commerce & SAV",
+          industry: "Boutique E-commerce & D2C",
+          description: "Boutique en ligne avec catalogue de 500+ références et flux régulier de commandes et questions clients.",
+          team: "1-4 personnes",
+          bottleneck: "Réponses répétitives au SAV (suivi de colis, retours, FAQ)",
+          volume: "300+ tickets / mois",
+        },
+        {
+          name: "🏢 Immobilier & Gestion",
+          industry: "Agence Immobilière & Gestion Locative",
+          description: "Agence immobilière indépendante gérant mandats de vente, locations et états des lieux.",
+          team: "5-15 personnes",
+          bottleneck: "Qualification des acquéreurs et planification des visites",
+          volume: "120+ leads / mois",
+        },
+        {
+          name: "🛠️ Artisans & BTP",
+          industry: "Rénovation & Second Œuvre",
+          description: "Entreprise artisanale de rénovation avec chantiers actifs et gestion administrative le soir.",
+          team: "1-4 personnes",
+          bottleneck: "Rédaction des devis le soir après les chantiers et relances",
+          volume: "25 chantiers / mois",
+        },
+      ]
+    : [
+        {
+          name: "💼 B2B Consulting",
+          industry: "Consulting & Strategy Firm",
+          description: "Transformation and business management consultancy supporting executives and general managers.",
+          team: "5-15 people",
+          bottleneck: "Following up on unanswered quotes and sorting incoming contact requests",
+          volume: "40+ quotes / month",
+        },
+        {
+          name: "🛒 E-commerce & Support",
+          industry: "E-commerce & D2C Store",
+          description: "Online store with 500+ products and a steady flow of orders and customer questions.",
+          team: "1-4 people",
+          bottleneck: "Repetitive customer support replies (delivery tracking, returns, FAQ)",
+          volume: "300+ tickets / month",
+        },
+        {
+          name: "🏢 Real Estate & Property",
+          industry: "Real Estate & Property Management Agency",
+          description: "Independent real estate agency managing sales mandates, rentals and property inspections.",
+          team: "5-15 people",
+          bottleneck: "Qualifying buyers and scheduling property visits",
+          volume: "120+ leads / month",
+        },
+        {
+          name: "🛠️ Contractors & Construction",
+          industry: "Renovation & Finishing Works",
+          description: "Renovation company with active construction sites and administrative work handled after hours.",
+          team: "1-4 people",
+          bottleneck: "Writing quotes after construction work and following up with prospects",
+          volume: "25 projects / month",
+        },
+      ];
+
+  const webPresets = language === "fr"
+    ? [
+        {
+          name: "🏛️ Cabinet d'Avocats / Conseil",
+          activity: "Cabinet d'Avocats d'Affaires",
+          description: "Prestations juridiques et fiscales haut de gamme pour chefs d'entreprise et investisseurs.",
+          goal: "Générer des rendez-vous qualifiés",
+          style: "Frosted Glass Épuré, Neutre Sombre & Typographie Prestige",
+          conversion: "Prise de RDV direct connectée à l'agenda avec questionnaire",
+        },
+        {
+          name: "💻 SaaS & Startup B2B",
+          activity: "Plateforme Logicielle B2B",
+          description: "Solution SaaS facilitant la gestion de projets et la collaboration entre équipes décentralisées.",
+          goal: "Vendre des prestations / abonnements",
+          style: "Moderne Tech, Micro-animations fluides & Dark Mode",
+          conversion: "Démonstrateur produit interactif & Essai gratuit 14 jours",
+        },
+        {
+          name: "🎓 Académie & Formation",
+          activity: "Organisme de Formation Dirigeants",
+          description: "Programmes immersifs et masterclasses certifiantes pour cadres et entrepreneurs.",
+          goal: "Asseoir l'autorité & recruter",
+          style: "High-Contrast Lumineux & Preuves Sociales",
+          conversion: "Téléchargement de syllabus & Candidature express",
+        },
+      ]
+    : [
+        {
+          name: "🏛️ Law Firm / Advisory",
+          activity: "Business Law Firm",
+          description: "High-end legal and tax services for business owners and investors.",
+          goal: "Generate qualified appointments",
+          style: "Clean Frosted Glass, Dark Neutral & Prestige Typography",
+          conversion: "Direct calendar booking with qualification questionnaire",
+        },
+        {
+          name: "💻 SaaS & B2B Startup",
+          activity: "B2B Software Platform",
+          description: "SaaS solution that simplifies project management and collaboration for distributed teams.",
+          goal: "Sell services / subscriptions",
+          style: "Modern Tech, Smooth Micro-animations & Dark Mode",
+          conversion: "Interactive product demo & 14-day free trial",
+        },
+        {
+          name: "🎓 Academy & Training",
+          activity: "Executive Training Organization",
+          description: "Immersive programs and certified masterclasses for executives and entrepreneurs.",
+          goal: "Build authority & recruit",
+          style: "Bright High-Contrast & Social Proof",
+          conversion: "Syllabus download & Express application",
+        },
+      ];
+
+  const appPresets = language === "fr"
+    ? [
+        {
+          name: "📋 Diagnostic Terrain",
+          type: "Application Terrain pour Techniciens & Experts",
+          description: "Techniciens itinérants effectuant des audits techniques et diagnostics sur le terrain.",
+          feature: "Dictée vocale IA & Génération de rapports d'intervention PDF signés",
+          platform: "PWA & Mobile (iOS / Android) avec mode hors-ligne",
+        },
+        {
+          name: "👥 Portail Client VIP",
+          type: "Portail Client Privé & Validation de Livrables",
+          description: "Cabinet d'audit délivrant des documents confidentiels et des suivis de projets personnalisés.",
+          feature: "Chatbot IA avec mémoire de projet et validation de jalons en 1 clic",
+          platform: "Web & Mobile PWA sécurisée",
+        },
+        {
+          name: "📊 Tableau de Bord Décisionnel",
+          type: "Cockpit Opérationnel Dirigeant",
+          description: "Groupe multisites avec besoin de centraliser et consolider les métriques financières en direct.",
+          feature: "Synthèse quotidienne IA des KPIs financiers & alertes de marge",
+          platform: "Multi-écrans & Mobile Responsive",
+        },
+      ]
+    : [
+        {
+          name: "📋 Field Diagnostics",
+          type: "Field App for Technicians & Experts",
+          description: "Mobile technicians performing technical audits and diagnostics on customer sites.",
+          feature: "AI voice dictation & generation of signed PDF service reports",
+          platform: "PWA & Mobile (iOS / Android) with offline mode",
+        },
+        {
+          name: "👥 VIP Client Portal",
+          type: "Private Client Portal & Deliverable Approval",
+          description: "Audit firm delivering confidential documents and personalized project tracking.",
+          feature: "AI chatbot with project memory and one-click milestone approval",
+          platform: "Secure Web & Mobile PWA",
+        },
+        {
+          name: "📊 Executive Decision Dashboard",
+          type: "Executive Operations Cockpit",
+          description: "Multi-site group needing to centralize and consolidate financial metrics in real time.",
+          feature: "Daily AI summary of financial KPIs & margin alerts",
+          platform: "Multi-screen & Responsive Mobile",
+        },
+      ];
 
   const triggerConfetti = () => {
     try {
@@ -649,9 +815,15 @@ export const Playground: React.FC<PlaygroundProps> = ({
                         : "bg-slate-50 border-slate-300 text-slate-900 focus:border-blue-500"
                     } outline-none`}
                   >
-                    <option value="1 à 4 personnes">1 à 4 personnes (Solo / Petite équipe)</option>
-                    <option value="5-15 personnes">5 à 15 personnes (PME en croissance)</option>
-                    <option value="20+ collaborateurs">20+ collaborateurs (Structure établie)</option>
+                    <option value={language === "fr" ? "1 à 4 personnes" : "1-4 people"}>
+                      {language === "fr" ? "1 à 4 personnes (Solo / Petite équipe)" : "1 to 4 people (Solo / Small team)"}
+                    </option>
+                    <option value={language === "fr" ? "5-15 personnes" : "5-15 people"}>
+                      {language === "fr" ? "5 à 15 personnes (PME en croissance)" : "5 to 15 people (Growing SME)"}
+                    </option>
+                    <option value={language === "fr" ? "20+ collaborateurs" : "20+ employees"}>
+                      {language === "fr" ? "20+ collaborateurs (Structure établie)" : "20+ employees (Established organization)"}
+                    </option>
                   </select>
                 </div>
 

@@ -1,33 +1,25 @@
-# Patch juridique + SEO pour capinakpado.com
+# Patch Capin Akpado — 404 + CMS bilingue
 
-Ce dossier contient les fichiers à ajouter/remplacer dans le projet.
+Fichiers complets :
+- src/App.tsx
+- src/components/NotFound.tsx
+- src/components/ServiceDetail.tsx
+- src/components/Dashboard.tsx
+- src/components/BilingualBlogEditor.tsx
+- src/data/contentStore.ts
+- server.ts
+- supabase/cms_bilingual.sql
 
-## Remplacements
+Objectifs :
+1. Les URLs inconnues n'effectuent plus de redirection silencieuse vers l'accueil.
+2. /fr/services/bonjour affiche la vraie page 404 au lieu du premier service / Guide IA Pro.
+3. Les slugs d'articles inexistants restent gérés par BlogArticle et reçoivent aussi un HTTP 404 en production quand Supabase est accessible.
+4. Le Dashboard permet de créer un article FR + EN et de publier/programmer les deux versions avec un seul bouton.
+5. La section « Je retiens » est conservée séparément en FR et EN.
+6. Le Dashboard propose désormais un éditeur plus complet pour les textes configurables de l'identité, de l'accueil, de la page À propos et de la page Contact.
+7. Les réglages de pages sont synchronisés dans Supabase et restent mis en cache dans localStorage pour conserver le comportement actuel.
 
-- `src/App.tsx` : corrige le commentaire `/** HEADER ... */` qui était placé directement dans le JSX et pouvait être rendu comme du texte visible. Ajoute aussi les routes juridiques et la bannière.
-- `src/components/Footer.tsx` : supprime le bloc de compétences/technologies et ajoute les liens vers CGU, confidentialité et gestion des préférences.
-- `src/components/CookieConsentBanner.tsx` : nouvelle bannière.
-- `src/components/LegalPage.tsx` : pages CGU et politique de confidentialité.
-
-## Fichiers publics
-
-Copier dans `public/` :
-- `robots.txt`
-- `sitemap.xml`
-- `llms.txt`
-- `.htaccess`
-- `.well-known/security.txt`
-
-## Important avant publication
-
-La politique de confidentialité est adaptée au code du ZIP fourni : formulaire Formspree, Supabase/outil IA, localStorage et Calendly.
-
-Avant publication définitive, vérifier et compléter :
-1. l'identité juridique exacte de l'éditeur (nom commercial, forme juridique/RCCM/IFU si applicable) ;
-2. l'adresse professionnelle exacte ;
-3. l'hébergeur et ses coordonnées ;
-4. les durées de conservation réellement appliquées ;
-5. les formalités APDP qui vous sont applicables ;
-6. le prestataire/modèle IA réellement utilisé par la fonction Supabase `analyze-playground`.
-
-Le bandeau est un bandeau de consentement aux traceurs optionnels, pas une acceptation des CGU. Une acceptation des CGU ne doit pas être déduite d'un clic sur « Accepter » dans une bannière cookies.
+IMPORTANT :
+- Exécuter supabase/cms_bilingual.sql dans Supabase SQL Editor avant d'utiliser la publication bilingue.
+- Le Dashboard utilise déjà Supabase Auth ; la table site_settings autorise la lecture publique et les écritures uniquement aux utilisateurs authentifiés.
+- Les anciens articles sans translation_group_id restent compatibles avec l'ancien éditeur.

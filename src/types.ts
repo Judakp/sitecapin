@@ -85,7 +85,7 @@ export interface BlogPost {
   title: string;
   slug: string;
   summary: string;
-  content: string[];
+  content: string | string[];
   category: string;
   readTime: string;
   publishedDate: string;

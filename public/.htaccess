@@ -1,42 +1,46 @@
-# Apache uniquement.
-# Si le site est servi par server.ts / Node / Express, ce fichier n'est pas utilisé.
+# ============================================================
+# CAPIN AKPADO — Apache / LWS — SPA statique (Corrigé)
+# ============================================================
 
-RewriteEngine On
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
 
-# Forcer HTTPS lorsque le serveur Apache termine directement la connexion TLS.
-RewriteCond %{HTTPS} !=on
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-
-# Compression si les modules Apache correspondants sont disponibles.
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/plain
-  AddOutputFilterByType DEFLATE text/html
-  AddOutputFilterByType DEFLATE text/css
-  AddOutputFilterByType DEFLATE application/javascript
-  AddOutputFilterByType DEFLATE application/json
-  AddOutputFilterByType DEFLATE application/xml
-  AddOutputFilterByType DEFLATE image/svg+xml
-</IfModule>
-
-# Cache long pour les assets Vite versionnés par hash.
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType image/webp "access plus 1 year"
-  ExpiresByType image/png "access plus 1 year"
-  ExpiresByType image/jpeg "access plus 1 year"
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-</IfModule>
-
-# Ne jamais mettre robots/sitemap en cache trop longtemps.
-<FilesMatch "^(robots\.txt|sitemap\.xml|llms\.txt)$">
-  <IfModule mod_headers.c>
-    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  # ------------------------------------------------------------
+  # Compression
+  # ------------------------------------------------------------
+  <IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain text/html text/css application/javascript application/json application/xml image/svg+xml
   </IfModule>
-</FilesMatch>
 
-# Fallback SPA : les URLs React sont servies par index.html.
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.html [L]
+  # ------------------------------------------------------------
+  # Cache assets versionnés
+  # ------------------------------------------------------------
+  <IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+  </IfModule>
+
+  <FilesMatch "^(robots\.txt|sitemap\.xml|llms\.txt)$">
+    <IfModule mod_headers.c>
+      Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </IfModule>
+  </FilesMatch>
+
+  # ------------------------------------------------------------
+  # Fallback SPA React (Sécurisé)
+  # ------------------------------------------------------------
+  # Ne pas réécrire si on est déjà sur index.html
+  RewriteRule ^index\.html$ - [L]
+  
+  # Si le fichier ou dossier n'existe pas, renvoyer vers /index.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>

@@ -109,12 +109,13 @@ export const Footer: React.FC<FooterProps> = ({
                 />
               </div>
 
+              {/* MODIFICATION ICI : Application de font-dancing comme dans le Header */}
               <span
-                className={`font-semibold tracking-normal text-base font-sans ${
+                className={`font-dancing tracking-wide text-xl sm:text-2xl transition-colors ${
                   theme === "dark" ? "text-zinc-100" : "text-slate-800"
                 }`}
               >
-                Capin <span className="text-blue-500 font-bold">Akpado</span>
+                <span className="font-medium">Capin</span> <span className="text-blue-500 font-extrabold">Akpado</span>
               </span>
             </div>
 
@@ -139,7 +140,7 @@ export const Footer: React.FC<FooterProps> = ({
               </a>
 
               <a
-                href="https://linkedin.com"
+                href="https://www.linkedin.com/in/capin-judicaël-akpado-4a4780163/"
                 target="_blank"
                 rel="noreferrer"
                 className={`p-2.5 rounded-xl border transition-all ${
@@ -154,7 +155,7 @@ export const Footer: React.FC<FooterProps> = ({
               </a>
 
               <a
-                href="https://github.com"
+                href="https://github.com/Judakp"
                 target="_blank"
                 rel="noreferrer"
                 className={`p-2.5 rounded-xl border transition-all ${

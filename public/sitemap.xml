@@ -32,6 +32,22 @@
   <url><loc>https://capinakpado.com/fr/blog</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog"/></url>
   <url><loc>https://capinakpado.com/en/blog</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog"/></url>
 
+  <!-- Latest blog article: French -->
+  <url>
+    <loc>https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia</loc>
+    <lastmod>2026-10-07</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai"/>
+  </url>
+
+  <!-- Latest blog article: English -->
+  <url>
+    <loc>https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai</loc>
+    <lastmod>2026-10-07</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai"/>
+  </url>
+
   <url><loc>https://capinakpado.com/fr/guide-ia-pro</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-pro-guide"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/guide-ia-pro"/></url>
   <url><loc>https://capinakpado.com/en/ai-pro-guide</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/guide-ia-pro"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-pro-guide"/></url>
 

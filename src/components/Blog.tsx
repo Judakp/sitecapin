@@ -12,7 +12,7 @@ import {
 import { BlogPost, Language, ThemeMode } from "../types";
 import { getProfilePhoto } from "../data/contentStore";
 import { useTranslation } from "../data/translations";
-import { supabase } from "../lib/supabase";
+import { fetchPublicBlogPosts } from "../data/blogUtils";
 
 interface BlogProps {
   language: Language;
@@ -33,48 +33,25 @@ export const Blog: React.FC<BlogProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  // Récupération des articles depuis Supabase filtrés par langue
+  // Les articles sont lus depuis Supabase et les articles programmés ne
+  // deviennent visibles qu'à partir de leur date/heure de programmation.
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchSupabasePosts() {
+    async function fetchPosts() {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("blog_posts")
-          .select("*")
-          .eq("language", language)
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Erreur lors de la récupération Supabase:", error.message);
-        } else if (data && isMounted) {
-          const formattedPosts: BlogPost[] = data.map((item) => ({
-            id: item.id,
-            slug: item.slug,
-            title: item.title,
-            summary: item.summary,
-            content: item.content,
-            category: item.category,
-            readTime: item.read_time,
-            publishedDate: item.published_date,
-            coverImage: item.cover_image,
-            tags: item.tags || [],
-            keyTakeaways: item.key_takeaways || [],
-            author: item.author,
-          }));
-          setPosts(formattedPosts);
-        }
-      } catch (err) {
-        console.error("Erreur réseau Supabase:", err);
+        const publicPosts = await fetchPublicBlogPosts(language);
+        if (isMounted) setPosts(publicPosts);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des articles :", error);
+        if (isMounted) setPosts([]);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     }
 
-    fetchSupabasePosts();
+    fetchPosts();
     setProfilePhoto(getProfilePhoto());
 
     return () => {
@@ -192,6 +169,10 @@ export const Blog: React.FC<BlogProps> = ({
                     <img
                       src={post.coverImage}
                       alt={post.title}
+                      width={1280}
+                      height={720}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

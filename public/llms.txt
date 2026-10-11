@@ -24,6 +24,11 @@
 - Contact : https://capinakpado.com/fr/contact
 - Contact (English) : https://capinakpado.com/en/contact
 
+## Articles de blog
+
+- LLM, Chatbot, Assistant IA, Workflow, Agent IA : qui fait quoi dans l’IA ? : https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia
+- LLM, Chatbot, AI Assistant, Workflow, AI Agent: Who Does What in AI? : https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai
+
 ## Services détaillés
 
 - Agents IA autonomes : https://capinakpado.com/fr/services/agents-ia-autonomes

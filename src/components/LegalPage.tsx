@@ -214,7 +214,7 @@ function PrivacyContent({
   return (
     <div className="space-y-5">
       <Section number="1" title={fr ? "Responsable du traitement" : "Data controller"} {...{cardClass, bodyClass, headingClass}}>
-        <p>{fr ? "Responsable : Capin Judicael Akpado. Localisation déclarée : Cotonou, Bénin. Contact relatif aux données personnelles : contact@capinakpado.com." : "Controller: Capin Judicael Akpado. Declared location: Cotonou, Benin. Privacy contact: contact@capinakpado.com."}</p>
+        <p>{fr ? "Responsable : Capin Judicael Akpado. Localisation déclarée : Ouidah, Bénin. Contact relatif aux données personnelles : contact@capinakpado.com." : "Controller: Capin Judicael Akpado. Declared location: Ouidah, Benin. Privacy contact: contact@capinakpado.com."}</p>
         <p>{fr ? "Si une structure juridique, une adresse professionnelle ou un délégué à la protection des données est ultérieurement désigné, cette page sera mise à jour." : "If a legal entity, professional address or data protection officer is subsequently designated, this page will be updated."}</p>
       </Section>
 

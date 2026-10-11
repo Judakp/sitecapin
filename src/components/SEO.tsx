@@ -14,7 +14,7 @@ interface SEOProps {
 export const SEO: React.FC<SEOProps> = ({
   title,
   description,
-  image = 'https://capinakpado.com/og-default-image.jpg', // Remplacez par votre vraie image par défaut (ex: un beau visuel de votre portfolio)
+  image = 'https://capinakpado.com/og-default-image.png', // Remplacez par votre vraie image par défaut (ex: un beau visuel de votre portfolio)
   url = 'https://capinakpado.com',
   type = 'website',
   language,
