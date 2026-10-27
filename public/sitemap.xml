@@ -34,19 +34,68 @@
 
   <!-- Latest blog article: French -->
   <url>
+    <loc>https://capinakpado.com/fr/blog/agent-ia-en-avez-vous-vraiment-besoin-voici-comment-le-savoir</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/agent-ia-en-avez-vous-vraiment-besoin-voici-comment-le-savoir"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/ai-agent-do-you-really-need-one-here-s-how-to-decide"/>
+  </url>
+
+  <!-- Latest blog article: English -->
+  <url>
+    <loc>https://capinakpado.com/en/blog/ai-agent-do-you-really-need-one-here-s-how-to-decide</loc>
+    <lastmod>2026-10-14</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/agent-ia-en-avez-vous-vraiment-besoin-voici-comment-le-savoir"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/ai-agent-do-you-really-need-one-here-s-how-to-decide"/>
+  </url>
+
+  <!-- Previous blog article: French -->
+  <url>
+    <loc>https://capinakpado.com/fr/blog/fout-et-foit-le-guide-d-optimisation-des-polices-web</loc>
+    <lastmod>2026-10-11</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/fout-et-foit-le-guide-d-optimisation-des-polices-web"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/fout-and-foit-the-web-font-optimization-guide"/>
+  </url>
+
+  <!-- Previous blog article: English -->
+  <url>
+    <loc>https://capinakpado.com/en/blog/fout-and-foit-the-web-font-optimization-guide</loc>
+    <lastmod>2026-10-11</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/fout-et-foit-le-guide-d-optimisation-des-polices-web"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/fout-and-foit-the-web-font-optimization-guide"/>
+  </url>
+
+  <!-- Previous blog article: French -->
+  <url>
     <loc>https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia</loc>
     <lastmod>2026-10-07</lastmod>
     <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai"/>
   </url>
 
-  <!-- Latest blog article: English -->
+  <!-- Previous blog article: English -->
   <url>
     <loc>https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai</loc>
     <lastmod>2026-10-07</lastmod>
     <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai"/>
   </url>
+
+  <url>
+    <loc>https://capinakpado.com/en/blog/how-to-calculate-the-roi-of-an-ai-tool-before-paying-for-a-subscription</loc>
+    <lastmod>2026-10-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/comment-calculer-le-roi-d-un-outil-d-ia-avant-de-payer-un-abonnement"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/how-to-calculate-the-roi-of-an-ai-tool-before-paying-for-a-subscription"/>
+  </url>
+
+  <url>
+    <loc>https://capinakpado.com/fr/blog/comment-calculer-le-roi-d-un-outil-d-ia-avant-de-payer-un-abonnement</loc>
+    <lastmod>2026-10-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/blog/comment-calculer-le-roi-d-un-outil-d-ia-avant-de-payer-un-abonnement"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/blog/how-to-calculate-the-roi-of-an-ai-tool-before-paying-for-a-subscription"/>
+  </url>
+
+
+  
 
   <url><loc>https://capinakpado.com/fr/guide-ia-pro</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-pro-guide"/><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/guide-ia-pro"/></url>
   <url><loc>https://capinakpado.com/en/ai-pro-guide</loc><lastmod>2026-09-23</lastmod><xhtml:link rel="alternate" hreflang="fr" href="https://capinakpado.com/fr/guide-ia-pro"/><xhtml:link rel="alternate" hreflang="en" href="https://capinakpado.com/en/ai-pro-guide"/></url>

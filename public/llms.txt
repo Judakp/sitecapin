@@ -29,6 +29,12 @@
 - LLM, Chatbot, Assistant IA, Workflow, Agent IA : qui fait quoi dans l’IA ? : https://capinakpado.com/fr/blog/llm-chatbot-assistant-ia-workflow-agent-ia-qui-fait-quoi-dans-l-ia
 - LLM, Chatbot, AI Assistant, Workflow, AI Agent: Who Does What in AI? : https://capinakpado.com/en/blog/llm-chatbot-ai-assistant-workflow-ai-agent-who-does-what-in-ai
 
+- FOUT and FOIT: The Web Font Optimization Guide: https://capinakpado.com/en/blog/fout-and-foit-the-web-font-optimization-guide
+- FOUT et FOIT : le guide d’optimisation des polices web : https://capinakpado.com/fr/blog/fout-et-foit-le-guide-d-optimisation-des-polices-web
+
+- Agent IA : en avez-vous vraiment besoin ? Voici comment le savoir : https://capinakpado.com/fr/blog/agent-ia-en-avez-vous-vraiment-besoin-voici-comment-le-savoir
+- AI Agent: Do You Really Need One? Here’s How to Decide : https://capinakpado.com/en/blog/ai-agent-do-you-really-need-one-here-s-how-to-decide
+
 ## Services détaillés
 
 - Agents IA autonomes : https://capinakpado.com/fr/services/agents-ia-autonomes

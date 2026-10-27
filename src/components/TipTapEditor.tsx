@@ -60,7 +60,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert max-w-none min-h-[320px] p-4 text-xs sm:text-sm text-zinc-200 leading-relaxed focus:outline-none",
+          "prose max-w-none min-h-[320px] p-4 text-xs sm:text-sm leading-relaxed focus:outline-none",
       },
     },
     onUpdate: ({ editor }) => {

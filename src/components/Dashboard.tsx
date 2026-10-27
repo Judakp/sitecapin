@@ -226,7 +226,58 @@ export const Dashboard: React.FC<DashboardProps> = ({
       if (error) {
         console.error("Erreur de chargement Supabase:", error.message);
         showToast("⚠️ Impossible de charger les articles depuis Supabase.");
-      } else if (data) {
+        return;
+      }
+
+      if (!data) return;
+
+      const now = Date.now();
+      const dueScheduledPosts = data.filter((post: any) => {
+        if (post.status !== "scheduled" || !post.scheduled_at) return false;
+        const scheduledTimestamp = new Date(post.scheduled_at).getTime();
+        return Number.isFinite(scheduledTimestamp) && scheduledTimestamp <= now;
+      });
+
+      // Synchronise les anciens articles programmés dont la date est passée.
+      // Le contenu public les considère déjà comme publiés, mais leur statut
+      // Supabase peut rester "scheduled" si aucun processus externe ne le met à jour.
+      if (dueScheduledPosts.length > 0) {
+        await Promise.all(
+          dueScheduledPosts.map(async (post: any) => {
+            const { error: updateError } = await supabase
+              .from("blog_posts")
+              .update({
+                status: "published",
+                scheduled_at: null,
+                published_at: post.published_at || post.scheduled_at || new Date().toISOString(),
+              })
+              .eq("id", post.id);
+
+            if (updateError) {
+              console.error(
+                `Erreur de synchronisation du statut de l'article ${post.id}:`,
+                updateError.message
+              );
+            }
+          })
+        );
+
+        setPosts(
+          data.map((post: any) =>
+            dueScheduledPosts.some((duePost: any) => duePost.id === post.id)
+              ? {
+                  ...post,
+                  status: "published",
+                  scheduled_at: null,
+                  published_at:
+                    post.published_at ||
+                    post.scheduled_at ||
+                    new Date().toISOString(),
+                }
+              : post
+          )
+        );
+      } else {
         setPosts(data);
       }
     } catch (err) {
@@ -354,8 +405,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setPostKeyTakeawaysText(Array.isArray(post.key_takeaways) ? post.key_takeaways.join("\n") : "");
     setPostTagsText(Array.isArray(post.tags) ? post.tags.join(", ") : "");
     setPostCoverImage(post.cover_image || "");
-    setPostStatus(post.status || "published");
-    setPostScheduledAt(post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : "");
+
+    const scheduledTimestamp = post.scheduled_at
+      ? new Date(post.scheduled_at).getTime()
+      : NaN;
+    const scheduledAlreadyPublished =
+      post.status === "scheduled" &&
+      Number.isFinite(scheduledTimestamp) &&
+      scheduledTimestamp <= Date.now();
+
+    // A scheduled article whose date has passed is considered published.
+    // This also makes the editor display the correct "Mettre à jour" action.
+    setPostStatus(scheduledAlreadyPublished ? "published" : post.status || "published");
+    setPostScheduledAt(
+      scheduledAlreadyPublished
+        ? ""
+        : post.scheduled_at
+          ? new Date(post.scheduled_at).toISOString().slice(0, 16)
+          : ""
+    );
     setBlogPreviewMode(false);
   };
 
@@ -427,6 +495,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
+    const scheduledTimestamp = postScheduledAt
+      ? new Date(postScheduledAt).getTime()
+      : NaN;
+    const hasFutureSchedule =
+      Boolean(postScheduledAt) &&
+      Number.isFinite(scheduledTimestamp) &&
+      scheduledTimestamp > Date.now();
+
+    // Une date passée ne doit plus être enregistrée comme "scheduled".
+    // Cela évite qu'un article déjà publié reste bloqué dans cet état lors
+    // d'une modification depuis le dashboard.
+    const effectiveStatus = hasFutureSchedule
+      ? "scheduled"
+      : postStatus === "scheduled"
+        ? "published"
+        : postStatus;
+
     const payload = {
       ...(editingPost?.id ? { id: editingPost.id } : {}),
       slug: editingPost?.slug || generatedSlug || `article-${Date.now()}`,
@@ -444,12 +529,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       key_takeaways: takeawaysArray,
       content: postContentHtml,
       cover_image: postCoverImage,
-      status: postScheduledAt ? "scheduled" : postStatus,
-      scheduled_at: postScheduledAt ? new Date(postScheduledAt).toISOString() : null,
-      published_at: postScheduledAt
+      status: effectiveStatus,
+      scheduled_at: hasFutureSchedule
         ? new Date(postScheduledAt).toISOString()
-        : postStatus === "published"
-          ? new Date().toISOString()
+        : null,
+      published_at:
+        effectiveStatus === "published"
+          ? editingPost?.published_at || new Date().toISOString()
           : null,
     };
 
@@ -460,9 +546,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
         console.error("Erreur de sauvegarde Supabase:", error.message);
         showToast("❌ Échec de la publication sur Supabase.");
       } else {
-        const msg = postScheduledAt
-          ? `📅 Article programmé pour le ${new Date(postScheduledAt).toLocaleString("fr-FR")} !`
-          : `🎉 Article "${postTitle}" sauvegardé sur Supabase et disponible en ligne !`;
+        const isUpdate = Boolean(editingPost?.id);
+        const msg = hasFutureSchedule
+          ? isUpdate
+            ? `📅 Programmation de l'article "${postTitle}" mise à jour pour le ${new Date(postScheduledAt).toLocaleString("fr-FR")} !`
+            : `📅 Article programmé pour le ${new Date(postScheduledAt).toLocaleString("fr-FR")} !`
+          : isUpdate
+            ? `✅ Article "${postTitle}" mis à jour sur Supabase !`
+            : effectiveStatus === "draft"
+              ? `💾 Brouillon "${postTitle}" enregistré sur Supabase !`
+              : `🎉 Article "${postTitle}" publié sur Supabase !`;
+
         showToast(msg);
         setEditingPost(null);
         fetchPostsFromSupabase(blogLang);
@@ -953,7 +1047,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/30 transition-all border border-white/20"
                   >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>{isSaving ? "Publication..." : postScheduledAt ? "Programmer l'Article" : "Publier sur Supabase"}</span>
+                    <span>{isSaving
+                      ? "Enregistrement..."
+                      : postScheduledAt &&
+                          Number.isFinite(new Date(postScheduledAt).getTime()) &&
+                          new Date(postScheduledAt).getTime() > Date.now()
+                        ? editingPost?.id
+                          ? "Mettre à jour la programmation"
+                          : "Programmer l'Article"
+                        : editingPost?.id
+                          ? "Mettre à jour"
+                          : postStatus === "draft"
+                            ? "Enregistrer le brouillon"
+                            : "Publier sur Supabase"}</span>
                   </button>
                 </div>
               </div>
@@ -1152,14 +1258,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span className="px-2.5 py-1 rounded bg-blue-500/10 text-blue-500 font-semibold">
                       {postCategory}
                     </span>
-                    <span className="text-zinc-400">
+                    <span className={theme === "dark" ? "text-zinc-400" : "text-slate-600"}>
                       {postPublishedDate} • {postReadTime} min
                     </span>
                   </div>
 
-                  <h1 className="text-2xl sm:text-3xl font-extrabold">{postTitle || "Titre de l'article"}</h1>
+                  <h1 className={`text-2xl sm:text-3xl font-extrabold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>{postTitle || "Titre de l'article"}</h1>
 
-                  <p className="text-sm text-zinc-300 italic">{postSummary}</p>
+                  <p className={`text-sm italic ${theme === "dark" ? "text-zinc-300" : "text-slate-700"}`}>{postSummary}</p>
 
                   {/* Key Takeaways Box Preview */}
                   {postKeyTakeawaysText && (
@@ -1167,7 +1273,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="text-blue-500 font-bold text-xs font-mono flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5" /> Points Clés à Retenir
                       </div>
-                      <ul className="space-y-1 text-xs text-zinc-300">
+                      <ul className={`space-y-1 text-xs ${theme === "dark" ? "text-zinc-300" : "text-slate-800"}`}>
                         {postKeyTakeawaysText.split("\n").filter(Boolean).map((t, i) => (
                           <li key={i} className="flex items-start gap-1.5">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
@@ -1180,7 +1286,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                   {/* Rendu HTML dynamique généré par TipTap */}
                   <div
-                    className="prose prose-invert max-w-none text-xs sm:text-sm text-zinc-300 leading-relaxed space-y-3"
+                    className={`prose ${theme === "dark" ? "prose-invert text-zinc-300" : "text-slate-700"} max-w-none text-xs sm:text-sm leading-relaxed space-y-3`}
                     dangerouslySetInnerHTML={{ __html: postContentHtml }}
                   />
                 </div>
@@ -1200,7 +1306,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-600/30 border border-white/20"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  <span>{isSaving ? "Publication..." : postScheduledAt ? "Programmer l'Article" : "Publier sur Supabase"}</span>
+                  <span>{isSaving
+                      ? "Enregistrement..."
+                      : postScheduledAt &&
+                          Number.isFinite(new Date(postScheduledAt).getTime()) &&
+                          new Date(postScheduledAt).getTime() > Date.now()
+                        ? editingPost?.id
+                          ? "Mettre à jour la programmation"
+                          : "Programmer l'Article"
+                        : editingPost?.id
+                          ? "Mettre à jour"
+                          : postStatus === "draft"
+                            ? "Enregistrer le brouillon"
+                            : "Publier sur Supabase"}</span>
                 </button>
               </div>
 

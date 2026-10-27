@@ -195,3 +195,221 @@
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ==========================================================================
+   Mise en forme du contenu des articles (classe .prose)
+   Utilisée par : BlogArticle, aperçu du Dashboard, aperçu de BilingualBlogEditor
+   et zone d'édition TipTap.
+
+   Pourquoi ce bloc : le plugin @tailwindcss/typography n'est pas installé, donc
+   la classe "prose" ne faisait rien et le "preflight" de Tailwind remet à zéro
+   les titres, listes, citations et blocs de code (aucune différence visuelle).
+   Ces règles sont dans @layer components : les classes utilitaires placées
+   directement sur l'élément (ex. text-zinc-300) restent prioritaires.
+   Les couleurs suivent le thème porté par <html class="dark|light">.
+   ========================================================================== */
+@layer components {
+  /* Thème nuit (par défaut, comme l'état initial de l'application) */
+  .prose {
+    --prose-body: #d4d4d8;
+    --prose-heading: #fafafa;
+    --prose-muted: #a1a1aa;
+    --prose-link: #60a5fa;
+    --prose-link-hover: #93c5fd;
+    --prose-accent: #3b82f6;
+    --prose-border: rgba(255, 255, 255, 0.16);
+    --prose-quote-bg: rgba(59, 130, 246, 0.1);
+    --prose-code-bg: rgba(255, 255, 255, 0.1);
+    --prose-code-text: #fcd34d;
+    --prose-pre-bg: rgba(0, 0, 0, 0.55);
+    --prose-pre-text: #e4e4e7;
+    --prose-pre-border: rgba(255, 255, 255, 0.12);
+    --prose-mark-bg: #fde68a;
+    --prose-mark-text: #1e293b;
+
+    color: var(--prose-body);
+    overflow-wrap: anywhere;
+  }
+
+  /* Thème jour */
+  .light .prose {
+    --prose-body: #334155;
+    --prose-heading: #0f172a;
+    --prose-muted: #475569;
+    --prose-link: #1d4ed8;
+    --prose-link-hover: #1e40af;
+    --prose-accent: #2563eb;
+    --prose-border: #cbd5e1;
+    --prose-quote-bg: rgba(37, 99, 235, 0.07);
+    --prose-code-bg: rgba(15, 23, 42, 0.07);
+    --prose-code-text: #9a3412;
+    --prose-pre-bg: #0f172a;
+    --prose-pre-text: #e2e8f0;
+    --prose-pre-border: #1e293b;
+  }
+
+  /* Blocs : espacement vertical (les marges voisines fusionnent) */
+  .prose :where(p, ul, ol, blockquote, pre, figure, hr) {
+    margin-block: 1.1em;
+  }
+
+  /* Titres */
+  .prose :where(h1, h2, h3, h4, h5, h6) {
+    color: var(--prose-heading);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .prose :where(h1) {
+    font-size: 1.9em;
+    font-weight: 800;
+    margin-block: 1.6em 0.6em;
+  }
+  .prose :where(h2) {
+    font-size: 1.5em;
+    font-weight: 800;
+    margin-block: 2em 0.7em;
+  }
+  .prose :where(h3) {
+    font-size: 1.22em;
+    font-weight: 700;
+    margin-block: 1.7em 0.5em;
+    padding-left: 0.7em;
+    border-left: 3px solid var(--prose-accent);
+  }
+  .prose :where(h4, h5, h6) {
+    font-size: 1.05em;
+    font-weight: 700;
+    margin-block: 1.4em 0.4em;
+  }
+  .prose > :where(:first-child) {
+    margin-top: 0;
+  }
+
+  /* Texte courant */
+  .prose :where(strong, b) {
+    color: var(--prose-heading);
+    font-weight: 700;
+  }
+  .prose :where(em, i) {
+    font-style: italic;
+  }
+  .prose :where(s, del) {
+    text-decoration: line-through;
+    opacity: 0.8;
+  }
+
+  /* Liens (!important : TipTap ajoute une classe text-blue-400 trop claire en mode jour) */
+  .prose :where(a) {
+    color: var(--prose-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    font-weight: 500;
+  }
+  .light .prose :where(a) {
+    color: var(--prose-link) !important;
+  }
+  .prose :where(a):hover {
+    color: var(--prose-link-hover);
+  }
+  .light .prose :where(a):hover {
+    color: var(--prose-link-hover) !important;
+  }
+
+  /* Listes à puces et numérotées */
+  .prose :where(ul) {
+    list-style-type: disc;
+    padding-left: 1.6em;
+  }
+  .prose :where(ol) {
+    list-style-type: decimal;
+    padding-left: 1.7em;
+  }
+  .prose :where(ul ul) {
+    list-style-type: circle;
+  }
+  .prose :where(li) {
+    margin-block: 0.4em;
+    padding-left: 0.2em;
+  }
+  .prose :where(li)::marker {
+    color: var(--prose-accent);
+    font-weight: 700;
+  }
+  /* TipTap place chaque item dans un <p> : on enlève ses marges */
+  .prose :where(li > p) {
+    margin-block: 0;
+  }
+  .prose :where(li > ul, li > ol) {
+    margin-block: 0.4em 0;
+  }
+
+  /* Citations */
+  .prose :where(blockquote) {
+    border-left: 4px solid var(--prose-accent);
+    background: var(--prose-quote-bg);
+    color: var(--prose-muted);
+    font-style: italic;
+    padding: 0.7em 1.1em;
+    border-radius: 0 0.6rem 0.6rem 0;
+  }
+  .prose :where(blockquote > p) {
+    margin-block: 0.4em;
+  }
+
+  /* Code en ligne */
+  .prose :where(code) {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    font-weight: 500;
+    background: var(--prose-code-bg);
+    color: var(--prose-code-text);
+    padding: 0.15em 0.4em;
+    border-radius: 0.35rem;
+  }
+
+  /* Bloc de code */
+  .prose :where(pre) {
+    background: var(--prose-pre-bg);
+    color: var(--prose-pre-text);
+    border: 1px solid var(--prose-pre-border);
+    padding: 1em 1.2em;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    font-size: 0.86em;
+    line-height: 1.7;
+    white-space: pre;
+    overflow-wrap: normal;
+  }
+  .prose :where(pre code) {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    font-weight: 400;
+  }
+
+  /* Surlignage : on fixe aussi la couleur du texte, sinon texte clair sur fond jaune en mode nuit */
+  .prose :where(mark) {
+    background-color: var(--prose-mark-bg);
+    color: var(--prose-mark-text);
+    padding: 0.05em 0.3em;
+    border-radius: 0.25rem;
+  }
+
+  /* Séparateur et images */
+  .prose :where(hr) {
+    border: 0;
+    border-top: 1px solid var(--prose-border);
+    margin-block: 2.2em;
+  }
+  .prose :where(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+    border-radius: 0.75rem;
+  }
+}

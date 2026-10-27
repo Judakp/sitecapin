@@ -29,6 +29,15 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
   const navigate = useNavigate();
   const isDark = theme === "dark";
 
+  // Couleurs dépendantes du thème : jamais de couleur fixe (text-black, etc.)
+  // sur un fond qui change entre le mode jour et le mode nuit.
+  const mutedText = isDark ? "text-zinc-400" : "text-slate-600";
+  const bodyText = isDark ? "text-zinc-200" : "text-slate-800";
+  const strongText = isDark ? "text-white" : "text-slate-900";
+  const accentText = isDark ? "text-blue-400" : "text-blue-700";
+  const successText = isDark ? "text-emerald-400" : "text-emerald-600";
+  const borderSoft = isDark ? "border-white/10" : "border-slate-300";
+
   const [article, setArticle] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
@@ -72,7 +81,7 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
     return (
       <div className="py-32 text-center space-y-3">
         <Loader2 className="w-8 h-8 mx-auto text-blue-500 animate-spin" />
-        <p className="text-xs text-zinc-400 font-mono">
+        <p className={`text-xs ${mutedText} font-mono`}>
           {language === "fr" ? "Chargement de l'article..." : "Loading article..."}
         </p>
       </div>
@@ -82,10 +91,10 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
   if (!article) {
     return (
       <div className="py-24 max-w-4xl mx-auto px-4 text-center space-y-6">
-        <h1 className="text-2xl sm:text-3xl font-extrabold">
+        <h1 className={`text-2xl sm:text-3xl font-extrabold ${strongText}`}>
           {language === "fr" ? "Article non trouvé" : "Article Not Found"}
         </h1>
-        <p className="text-zinc-400 text-sm">
+        <p className={`${mutedText} text-sm`}>
           {language === "fr"
             ? "L'article que vous cherchez n'existe pas ou a été déplacé."
             : "The article you are looking for does not exist or has been moved."}
@@ -149,14 +158,14 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
       {/* En-tête Article */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
-          <span className="px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
+          <span className={`px-2.5 py-1 rounded-full bg-blue-500/10 ${accentText} border border-blue-500/20 font-bold`}>
             {article.category}
           </span>
-          <span className="text-zinc-400 flex items-center gap-1">
+          <span className={`${mutedText} flex items-center gap-1`}>
             <Clock className="w-3.5 h-3.5" />
             {article.readTime}
           </span>
-          <span className="text-zinc-400 flex items-center gap-1">
+          <span className={`${mutedText} flex items-center gap-1`}>
             <Calendar className="w-3.5 h-3.5" />
             {article.publishedDate}
           </span>
@@ -175,7 +184,7 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
 
       {/* Image de couverture */}
       {article.coverImage && (
-        <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl max-h-[420px]">
+        <div className={`rounded-2xl overflow-hidden border ${borderSoft} shadow-xl max-h-[420px]`}>
           <img
             src={article.coverImage}
             alt={article.title}
@@ -191,14 +200,14 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
       {/* BLOC : CE QUE JE RETIENS */}
       {article.keyTakeaways && article.keyTakeaways.length > 0 && (
         <div className="p-6 rounded-2xl bg-blue-500/10 border border-blue-500/25 space-y-3">
-          <h3 className="text-sm font-extrabold text-blue-400 uppercase tracking-wider flex items-center gap-2 font-mono">
-            <Sparkles className="w-4 h-4 text-blue-400" />
+          <h3 className={`text-sm font-extrabold ${accentText} uppercase tracking-wider flex items-center gap-2 font-mono`}>
+            <Sparkles className={`w-4 h-4 ${accentText}`} />
             <span>{language === "fr" ? "Ce que je retiens :" : "Key Takeaways:"}</span>
           </h3>
           <ul className="space-y-2">
             {article.keyTakeaways.map((point, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-zinc-200">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <li key={idx} className={`flex items-start gap-2.5 text-xs sm:text-sm ${bodyText}`}>
+                <CheckCircle2 className={`w-4 h-4 ${successText} shrink-0 mt-0.5`} />
                 <span>{point}</span>
               </li>
             ))}
@@ -209,17 +218,19 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({
       {/* Contenu principal de l'article (Rendu HTML enrichi TipTap) */}
       <div
         className={`prose ${
-          isDark ? "prose-invert text-zinc-300" : "text-slate-700"
-        } max-w-none text-sm sm:text-base leading-relaxed space-y-4 prose-headings:font-bold prose-a:text-blue-400 prose-blockquote:border-l-blue-500`}
+          isDark
+            ? "prose-invert text-zinc-300 prose-a:text-blue-400"
+            : "text-slate-700 prose-a:text-blue-700"
+        } max-w-none text-sm sm:text-base leading-relaxed space-y-4 prose-headings:font-bold prose-blockquote:border-l-blue-500`}
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
 
       <BlogEngagement postId={article.id} language={language} theme={theme} />
 
       {/* Footer Article & CTA Contact */}
-      <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="text-xs text-zinc-400 font-mono">
-          Auteur : <strong className="text-white">{article.author?.name || "Capin Akpado"}</strong> ({article.author?.role || "Architecte IA & Full-Stack"})
+      <div className={`pt-8 border-t ${borderSoft} flex flex-col sm:flex-row items-center justify-between gap-4`}>
+        <div className={`text-xs ${bodyText} font-mono`}>
+          {language === "fr" ? "Auteur" : "Author"} : <strong className={strongText}>{article.author?.name || "Capin Akpado"}</strong> ({article.author?.role || "Architecte IA & Full-Stack"})
         </div>
 
         <button
